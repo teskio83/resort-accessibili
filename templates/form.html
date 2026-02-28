@@ -54,7 +54,7 @@
           <div class="col-12 col-md-6">
             <div class="form-check">
               <input class="form-check-input" type="checkbox" id="{{key}}" name="{{key}}"
-                     {% if resort and resort[key] %}checked{% endif %}>
+                     {% if resort and resort|attr(key) %}checked{% endif %}>
               <label class="form-check-label" for="{{key}}">{{label}}</label>
             </div>
           </div>
