@@ -1,17 +1,45 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="card shadow-sm p-3 mb-3">
-  <div class="fw-semibold mb-2">Storico</div>
-  <div class="row g-2">
-    <div class="col-6">
-      <span class="small-muted">Creato il:</span><br>
-      {{ resort.created_at }}
-    </div>
-    <div class="col-6">
-      <span class="small-muted">Ultima modifica:</span><br>
-      {{ resort.updated_at }}
-    </div>
+<div class="card shadow-sm p-3 mt-4">
+  <div class="fw-semibold mb-3">🕒 Timeline Attività</div>
+
+  {% if logs|length == 0 %}
+    <div class="text-muted">Nessuna attività registrata</div>
+  {% endif %}
+
+  <div class="timeline">
+    {% for l in logs %}
+
+      {% set color = "secondary" %}
+      {% set icon = "📝" %}
+
+      {% if l.action == "CREATED" %}
+        {% set color = "success" %}
+        {% set icon = "🟢" %}
+      {% elif l.action == "UPDATED" %}
+        {% set color = "primary" %}
+        {% set icon = "✏️" %}
+      {% elif l.action == "DELETED" %}
+        {% set color = "danger" %}
+        {% set icon = "🗑️" %}
+      {% endif %}
+
+      <div class="d-flex mb-3 align-items-start">
+        <div class="me-3 fs-5">{{ icon }}</div>
+
+        <div class="flex-grow-1">
+          <div class="fw-semibold text-{{ color }}">
+            {{ l.action }}
+          </div>
+          <div>{{ l.description }}</div>
+          <small class="text-muted">
+            {{ l.created_at.strftime('%d/%m/%Y %H:%M') }}
+          </small>
+        </div>
+      </div>
+
+    {% endfor %}
   </div>
 </div>
 
