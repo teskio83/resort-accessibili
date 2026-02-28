@@ -2,6 +2,9 @@ from flask import Flask, render_template, request, redirect, url_for, flash
 import sqlite3
 from pathlib import Path
 from datetime import datetime
+import os
+import psycopg2
+from urllib.parse import urlparse
 
 APP_DIR = Path(__file__).resolve().parent
 DB_PATH = APP_DIR / "resorts.db"
@@ -31,8 +34,11 @@ FEATURES = [
 ]
 
 def db():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    database_url = os.environ.get("DATABASE_URL")
+    if database_url:
+        conn = psycopg2.connect(database_url)
+    else:
+        conn = sqlite3.connect(DB_PATH)
     return conn
 
 def init_db():
