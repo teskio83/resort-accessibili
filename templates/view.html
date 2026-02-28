@@ -84,5 +84,20 @@
   <div class="fw-semibold mb-2">Note</div>
   <div>{{ resort.notes or "—" }}</div>
 </div>
+<div class="card shadow-sm p-3 mt-3">
+  <div class="fw-semibold mb-2">Timeline Attività</div>
+
+  {% if logs|length == 0 %}
+    <div class="text-muted">Nessuna attività</div>
+  {% endif %}
+
+  {% for l in logs %}
+    <div class="border-start ps-3 mb-2">
+      <div><strong>{{ l.action }}</strong></div>
+      <div>{{ l.description }}</div>
+      <small class="text-muted">{{ l.created_at }}</small>
+    </div>
+  {% endfor %}
+</div>
 
 {% endblock %}
