@@ -35,17 +35,16 @@ FEATURES = [
 
 def db():
     database_url = os.environ.get("DATABASE_URL")
-    if database_url:
-        conn = psycopg2.connect(database_url)
-    else:
-        conn = sqlite3.connect(DB_PATH)
-    return conn
+    if not database_url:
+        raise Exception("DATABASE_URL non configurato")
+    return psycopg2.connect(database_url)
 
 def init_db():
     conn = db()
-    conn.execute("""
+    cur = conn.cursor()
+    cur.execute("""
     CREATE TABLE IF NOT EXISTS resorts (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
         name TEXT NOT NULL,
         region TEXT,
         city TEXT,
@@ -53,32 +52,33 @@ def init_db():
         phone TEXT,
         email TEXT,
 
-        price_week REAL,
+        price_week NUMERIC,
         price_period TEXT,
         price_notes TEXT,
 
         status TEXT DEFAULT 'valutare',
-        keep_flag INTEGER DEFAULT 0,
+        keep_flag BOOLEAN DEFAULT FALSE,
 
         notes TEXT,
 
-        wheelchair_access INTEGER DEFAULT 0,
-        beach_walkway INTEGER DEFAULT 0,
-        beach_bathroom_h INTEGER DEFAULT 0,
-        beach_job_chair INTEGER DEFAULT 0,
-        accessible_room INTEGER DEFAULT 0,
-        restaurant_accessible INTEGER DEFAULT 0,
-        pool_accessible INTEGER DEFAULT 0,
-        lift INTEGER DEFAULT 0,
-        disabled_parking INTEGER DEFAULT 0,
-        step_free_paths INTEGER DEFAULT 0,
-        staff_assistance INTEGER DEFAULT 0,
+        wheelchair_access BOOLEAN DEFAULT FALSE,
+        beach_walkway BOOLEAN DEFAULT FALSE,
+        beach_bathroom_h BOOLEAN DEFAULT FALSE,
+        beach_job_chair BOOLEAN DEFAULT FALSE,
+        accessible_room BOOLEAN DEFAULT FALSE,
+        restaurant_accessible BOOLEAN DEFAULT FALSE,
+        pool_accessible BOOLEAN DEFAULT FALSE,
+        lift BOOLEAN DEFAULT FALSE,
+        disabled_parking BOOLEAN DEFAULT FALSE,
+        step_free_paths BOOLEAN DEFAULT FALSE,
+        staff_assistance BOOLEAN DEFAULT FALSE,
 
-        created_at TEXT,
-        updated_at TEXT
+        created_at TIMESTAMP,
+        updated_at TIMESTAMP
     );
     """)
     conn.commit()
+    cur.close()
     conn.close()
 
 def to_int(v):
@@ -108,7 +108,7 @@ def index():
     params = []
 
     if q:
-        where.append("(name LIKE ? OR city LIKE ? OR notes LIKE ?)")
+        where.append("(name ILIKE %s OR city ILIKE %s OR notes ILIKE %s)")
         like = f"%{q}%"
         params += [like, like, like]
     if region:
@@ -175,7 +175,7 @@ def new_resort():
 @app.route("/edit/<int:resort_id>", methods=["GET", "POST"])
 def edit_resort(resort_id):
     conn = db()
-    resort = conn.execute("SELECT * FROM resorts WHERE id = ?", (resort_id,)).fetchone()
+    resort = conn.execute("SELECT * FROM resorts WHERE id = %s", (resort_id,)).fetchone()
     if not resort:
         conn.close()
         flash("Resort non trovato.", "danger")
@@ -185,9 +185,9 @@ def edit_resort(resort_id):
         data = parse_form(request.form)
         data["updated_at"] = datetime.utcnow().isoformat(timespec="seconds")
 
-        sets = ", ".join([f"{k} = ?" for k in data.keys()])
+        sets = ", ".join([f"{k} = %s" for k in data.keys()])
         vals = list(data.values()) + [resort_id]
-        conn.execute(f"UPDATE resorts SET {sets} WHERE id = ?", vals)
+        conn.execute(f"UPDATE resorts SET {sets} WHERE id = %s", vals)
         conn.commit()
         conn.close()
 
@@ -205,7 +205,7 @@ def edit_resort(resort_id):
 @app.route("/view/<int:resort_id>")
 def view_resort(resort_id):
     conn = db()
-    resort = conn.execute("SELECT * FROM resorts WHERE id = ?", (resort_id,)).fetchone()
+    resort = conn.execute("SELECT * FROM resorts WHERE id = %s", (resort_id,)).fetchone()
     conn.close()
     if not resort:
         flash("Resort non trovato.", "danger")
@@ -217,7 +217,7 @@ def view_resort(resort_id):
 @app.route("/delete/<int:resort_id>", methods=["POST"])
 def delete_resort(resort_id):
     conn = db()
-    conn.execute("DELETE FROM resorts WHERE id = ?", (resort_id,))
+    conn.execute("DELETE FROM resorts WHERE id = %s", (resort_id,))
     conn.commit()
     conn.close()
     flash("Eliminato 🗑️", "warning")
