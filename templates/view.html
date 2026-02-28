@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-start mb-2">
+  <div>
+    <div class="fs-4 fw-semibold">{{ resort.name }}</div>
+    <div class="small-muted">{{ resort.region or "—" }}{% if resort.city %} • {{ resort.city }}{% endif %}</div>
+    <div class="mt-2 d-flex gap-2 flex-wrap">
+      <span class="badge badge-soft">Accessibilità: {{ have }}/{{ total }}</span>
+      {% if resort.status == "interessante" %}
+        <span class="badge text-bg-success">Interessante</span>
+      {% elif resort.status == "scartare" %}
+        <span class="badge text-bg-danger">Scartare</span>
+      {% else %}
+        <span class="badge text-bg-secondary">Da valutare</span>
+      {% endif %}
+      {% if resort.keep_flag %}
+        <span class="badge badge-soft">Da tenere</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-primary btn-sm" href="{{ url_for('edit_resort', resort_id=resort.id) }}">Modifica</a>
+    <form method="post" action="{{ url_for('delete_resort', resort_id=resort.id) }}"
+          onsubmit="return confirm('Eliminare questo resort?');">
+      <button class="btn btn-outline-danger btn-sm">Elimina</button>
+    </form>
+  </div>
+</div>
+
+<div class="card shadow-sm p-3 mb-3">
+  <div class="fw-semibold mb-2">Contatti</div>
+  <div class="row g-2">
+    <div class="col-12"><span class="small-muted">Sito:</span>
+      {% if resort.website %}<a href="{{ resort.website }}" target="_blank">{{ resort.website }}</a>{% else %}—{% endif %}
+    </div>
+    <div class="col-6"><span class="small-muted">Tel:</span> {{ resort.phone or "—" }}</div>
+    <div class="col-6"><span class="small-muted">Email:</span> {{ resort.email or "—" }}</div>
+  </div>
+</div>
+
+<div class="card shadow-sm p-3 mb-3">
+  <div class="fw-semibold mb-2">Accessibilità</div>
+  <div class="row g-2">
+    {% for key, label in features %}
+      <div class="col-12 col-md-6">
+        {% if resort[key] %}
+          ✅ {{ label }}
+        {% else %}
+          <span class="text-muted">⬜ {{ label }}</span>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="card shadow-sm p-3 mb-3">
+  <div class="fw-semibold mb-2">Prezzo</div>
+  <div class="row g-2">
+    <div class="col-6"><span class="small-muted">Settimana:</span>
+      {% if resort.price_week %}€ {{ "%.0f"|format(resort.price_week) }}{% else %}—{% endif %}
+    </div>
+    <div class="col-6"><span class="small-muted">Periodo:</span> {{ resort.price_period or "—" }}</div>
+    <div class="col-12"><span class="small-muted">Note prezzo:</span> {{ resort.price_notes or "—" }}</div>
+  </div>
+</div>
+
+<div class="card shadow-sm p-3">
+  <div class="fw-semibold mb-2">Note</div>
+  <div>{{ resort.notes or "—" }}</div>
+</div>
+
+{% endblock %}
