@@ -11,9 +11,9 @@ def index():
     params = []
 
     if q:
-        where.append("(name ILIKE %s OR city ILIKE %s OR notes ILIKE %s)")
+        where.append("(name ILIKE %s OR city ILIKE %s OR notes ILIKE %s OR region ILIKE %s)")
         like = f"%{q}%"
-        params += [like, like, like]
+        params += [like, like, like, like]
 
     if region:
         where.append("region = %s")
