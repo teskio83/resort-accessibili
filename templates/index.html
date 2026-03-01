@@ -1,5 +1,6 @@
 @app.route("/")
 def index():
+
     q = (request.args.get("q") or "").strip()
     region = (request.args.get("region") or "").strip()
     status = (request.args.get("status") or "").strip()
