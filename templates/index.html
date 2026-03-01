@@ -1,4 +1,5 @@
 @app.route("/")
+
 def index():
 
     q = (request.args.get("q") or "").strip()
@@ -59,5 +60,4 @@ def index():
             "only_access": only_access,
             "keep": keep
         }
-
     )
