@@ -1,3 +1,92 @@
-@app.route("/")
-def index():
-    return "APP FUNZIONA"
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Resort Accessibili</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f4f6f9;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        .search-box {
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            padding: 8px;
+            width: 250px;
+        }
+        button {
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+        .card {
+            background: white;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 6px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+        .meta {
+            font-size: 14px;
+            color: #666;
+        }
+        .score {
+            font-weight: bold;
+            margin-top: 8px;
+        }
+        .empty {
+            color: #888;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Resort Accessibili</h1>
+
+<div class="search-box">
+    <form method="get">
+        <input type="text" name="q" placeholder="Cerca per nome, città, regione..."
+               value="{{ filters.q if filters.q }}">
+        <button type="submit">Cerca</button>
+    </form>
+</div>
+
+{% if resorts %}
+    {% for resort, have, total in resorts %}
+        <div class="card">
+            <h3>{{ resort.name }}</h3>
+
+            <div class="meta">
+                {{ resort.region or "" }}
+                {% if resort.city %} - {{ resort.city }}{% endif %}
+            </div>
+
+            <div class="score">
+                Accessibilità: {{ have }}/{{ total }}
+            </div>
+
+            {% if resort.price_week %}
+                <div>Prezzo: € {{ resort.price_week }}</div>
+            {% endif %}
+
+            {% if resort.notes %}
+                <div style="margin-top:10px;">
+                    {{ resort.notes }}
+                </div>
+            {% endif %}
+        </div>
+    {% endfor %}
+{% else %}
+    <div class="empty">
+        Nessun resort trovato.
+    </div>
+{% endif %}
+
+</body>
+</html>
