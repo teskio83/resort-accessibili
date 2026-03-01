@@ -9,6 +9,11 @@ from psycopg2.extras import RealDictCursor
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "change-me-please")
 
+
+# =========================
+# CONFIG
+# =========================
+
 REGIONS = [
     "Abruzzo","Basilicata","Calabria","Campania","Emilia-Romagna","Friuli-Venezia Giulia",
     "Lazio","Liguria","Lombardia","Marche","Molise","Piemonte","Puglia","Sardegna",
@@ -35,21 +40,22 @@ FEATURES = [
     ("staff_assistance", "Assistenza inclusiva"),
 ]
 
-# -------------------------
+
+# =========================
 # DATABASE
-# -------------------------
+# =========================
 
 def get_conn():
     dsn = os.environ.get("DATABASE_URL")
     if not dsn:
         raise RuntimeError("DATABASE_URL non configurato")
-    return psycopg2.connect(dsn)
+    return psycopg2.connect(dsn, sslmode="require")
+
 
 def init_db():
     with get_conn() as conn:
         with conn.cursor() as cur:
 
-            # TABELLA RESORTS
             cur.execute("""
             CREATE TABLE IF NOT EXISTS resorts (
                 id BIGSERIAL PRIMARY KEY,
@@ -59,15 +65,12 @@ def init_db():
                 website TEXT,
                 phone TEXT,
                 email TEXT,
-
                 price_week NUMERIC,
                 price_period TEXT,
                 price_notes TEXT,
-
                 status TEXT DEFAULT 'valutare',
                 keep_flag BOOLEAN DEFAULT FALSE,
                 notes TEXT,
-
                 wheelchair_access BOOLEAN DEFAULT FALSE,
                 beach_walkway BOOLEAN DEFAULT FALSE,
                 beach_bathroom_h BOOLEAN DEFAULT FALSE,
@@ -79,13 +82,11 @@ def init_db():
                 disabled_parking BOOLEAN DEFAULT FALSE,
                 step_free_paths BOOLEAN DEFAULT FALSE,
                 staff_assistance BOOLEAN DEFAULT FALSE,
-
                 created_at TIMESTAMPTZ,
                 updated_at TIMESTAMPTZ
             );
             """)
 
-            # TABELLA LOG ATTIVITA'
             cur.execute("""
             CREATE TABLE IF NOT EXISTS activity_log (
                 id BIGSERIAL PRIMARY KEY,
@@ -96,15 +97,10 @@ def init_db():
             );
             """)
 
-# inizializza al deploy
-try:
-    init_db()
-except Exception as e:
-    print("DB INIT ERROR:", e)
 
-# -------------------------
-# UTILITY
-# -------------------------
+# =========================
+# UTILITIES
+# =========================
 
 def as_obj(d):
     return SimpleNamespace(**d)
@@ -144,18 +140,34 @@ def calc_access_score(resort):
     have = sum(1 for k,_ in FEATURES if getattr(resort, k))
     return have, total
 
-# -------------------------
+
+# =========================
 # ROUTES
-# -------------------------
+# =========================
 
 @app.route("/")
 def index():
+
+    q = (request.args.get("q") or "").strip()
+
+    where = []
+    params = []
+
+    if q:
+        where.append("(name ILIKE %s OR city ILIKE %s OR notes ILIKE %s OR region ILIKE %s)")
+        like = f"%{q}%"
+        params += [like, like, like, like]
+
+    sql = "SELECT * FROM resorts"
+
+    if where:
+        sql += " WHERE " + " AND ".join(where)
+
+    sql += " ORDER BY updated_at DESC NULLS LAST, created_at DESC NULLS LAST"
+
     with get_conn() as conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute("""
-                SELECT * FROM resorts
-                ORDER BY updated_at DESC NULLS LAST, created_at DESC NULLS LAST
-            """)
+            cur.execute(sql, params)
             rows = cur.fetchall()
 
     resorts = []
@@ -168,7 +180,8 @@ def index():
                            resorts=resorts,
                            regions=REGIONS,
                            status_choices=STATUS_CHOICES,
-                           filters={})
+                           filters={"q": q})
+
 
 @app.route("/new", methods=["GET","POST"])
 def new_resort():
@@ -205,68 +218,6 @@ def new_resort():
                            features=FEATURES,
                            resort=None)
 
-@app.route("/view/<int:resort_id>")
-def view_resort(resort_id):
-    with get_conn() as conn:
-        with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute("SELECT * FROM resorts WHERE id=%s",(resort_id,))
-            r = cur.fetchone()
-            if not r:
-                flash("Non trovato","danger")
-                return redirect(url_for("index"))
-
-            cur.execute("""
-                SELECT * FROM activity_log
-                WHERE resort_id=%s
-                ORDER BY created_at DESC
-            """,(resort_id,))
-            logs = cur.fetchall()
-
-    resort = as_obj(r)
-    logs = [as_obj(l) for l in logs]
-    have,total = calc_access_score(resort)
-
-    return render_template("view.html",
-                           resort=resort,
-                           features=FEATURES,
-                           have=have,
-                           total=total,
-                           logs=logs)
-
-@app.route("/edit/<int:resort_id>",methods=["GET","POST"])
-def edit_resort(resort_id):
-
-    if request.method=="POST":
-        data=parse_form(request.form)
-        data["updated_at"]=datetime.utcnow()
-
-        cols=list(data.keys())
-        sets=", ".join([f"{c}=%s" for c in cols])
-        values=[data[c] for c in cols]+[resort_id]
-
-        with get_conn() as conn:
-            with conn.cursor() as cur:
-                cur.execute(f"UPDATE resorts SET {sets} WHERE id=%s",values)
-
-                cur.execute("""
-                    INSERT INTO activity_log (resort_id,action,description)
-                    VALUES (%s,%s,%s)
-                """,(resort_id,"UPDATED","Modifica resort"))
-
-        flash("Salvato ✅","success")
-        return redirect(url_for("view_resort",resort_id=resort_id))
-
-    with get_conn() as conn:
-        with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute("SELECT * FROM resorts WHERE id=%s",(resort_id,))
-            r=cur.fetchone()
-
-    return render_template("form.html",
-                           mode="edit",
-                           regions=REGIONS,
-                           status_choices=STATUS_CHOICES,
-                           features=FEATURES,
-                           resort=as_obj(r))
 
 @app.route("/delete/<int:resort_id>",methods=["POST"])
 def delete_resort(resort_id):
@@ -276,6 +227,11 @@ def delete_resort(resort_id):
 
     flash("Eliminato 🗑️","warning")
     return redirect(url_for("index"))
+
+
+# =========================
+# LOCAL RUN
+# =========================
 
 if __name__=="__main__":
     port=int(os.environ.get("PORT",5000))
