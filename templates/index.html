@@ -27,11 +27,7 @@ def index():
         where.append("keep_flag = TRUE")
 
     if only_access == "1":
-        where.append("""
-            wheelchair_access = TRUE
-            AND beach_bathroom_h = TRUE
-            AND (beach_walkway = TRUE OR beach_job_chair = TRUE)
-        """)
+        where.append("wheelchair_access = TRUE AND beach_bathroom_h = TRUE AND (beach_walkway = TRUE OR beach_job_chair = TRUE)")
 
     sql = "SELECT * FROM resorts"
 
@@ -63,4 +59,5 @@ def index():
             "only_access": only_access,
             "keep": keep
         }
+
     )
