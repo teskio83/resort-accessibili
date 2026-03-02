@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Attività{% endblock %}
+{% block content %}
+
+<h5 class="mb-4">Attività recente</h5>
+
+{% for a in activities %}
+  <div class="card card-resort p-3 mb-2">
+    <div class="small">
+      <strong>{{ a.user_name }}</strong>
+      {% if a.action == "CREATED" %}
+        ha creato un resort
+      {% elif a.action == "UPDATED" %}
+        ha modificato un resort
+      {% elif a.action == "DELETED" %}
+        ha eliminato un resort
+      {% endif %}
+      <div class="muted small">{{ a.created_at }}</div>
+    </div>
+  </div>
+{% endfor %}
+
+{% endblock %}
