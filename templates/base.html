@@ -55,30 +55,15 @@
 <div class="topbar py-3">
   <div class="app-shell px-3">
     <div class="d-flex align-items-center justify-content-between gap-2">
-
       <div class="fw-semibold">
         <span class="brand-dot"></span>
         <a class="text-decoration-none text-dark" href="{{ url_for('index') }}">Resort Accessibili</a>
         <div class="small muted">Lista condivisa tra amici</div>
       </div>
-
-      <!-- 👇 DESTRA -->
-      <div class="d-flex gap-2 align-items-center">
-
+      <div class="d-flex gap-2">
         <a class="btn btn-outline-secondary btn-sm btn-pill" href="{{ url_for('index') }}">Home</a>
         <a class="btn btn-primary btn-sm btn-pill" href="{{ url_for('new_resort') }}">+ Nuovo</a>
-
-        {% if session.get("user") %}
-          <span class="small muted ms-3">
-            👤 {{ session.get("user") }}
-          </span>
-          <a class="btn btn-outline-dark btn-sm btn-pill" href="{{ url_for('logout') }}">
-            Logout
-          </a>
-        {% endif %}
-
       </div>
-
     </div>
   </div>
 </div>
