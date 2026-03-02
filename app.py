@@ -149,6 +149,10 @@ def calc_access_score(resort):
 def index():
 
     q = (request.args.get("q") or "").strip()
+    region = (request.args.get("region") or "").strip()
+    status = (request.args.get("status") or "").strip()
+    only_access = request.args.get("only_access", "")
+    keep = request.args.get("keep", "")
 
     where = []
     params = []
@@ -157,6 +161,24 @@ def index():
         where.append("(name ILIKE %s OR city ILIKE %s OR notes ILIKE %s OR region ILIKE %s)")
         like = f"%{q}%"
         params += [like, like, like, like]
+
+    if region:
+        where.append("region = %s")
+        params.append(region)
+
+    if status:
+        where.append("status = %s")
+        params.append(status)
+
+    if keep == "1":
+        where.append("keep_flag = TRUE")
+
+    if only_access == "1":
+        where.append("""
+            wheelchair_access = TRUE
+            AND beach_bathroom_h = TRUE
+            AND (beach_walkway = TRUE OR beach_job_chair = TRUE)
+        """)
 
     sql = "SELECT * FROM resorts"
 
@@ -173,15 +195,22 @@ def index():
     resorts = []
     for r in rows:
         obj = as_obj(r)
-        have,total = calc_access_score(obj)
-        resorts.append((obj,have,total))
+        have, total = calc_access_score(obj)
+        resorts.append((obj, have, total))
 
-    return render_template("index.html",
-                           resorts=resorts,
-                           regions=REGIONS,
-                           status_choices=STATUS_CHOICES,
-                           filters={"q": q})
-
+    return render_template(
+        "index.html",
+        resorts=resorts,
+        regions=REGIONS,
+        status_choices=STATUS_CHOICES,
+        filters={
+            "q": q,
+            "region": region,
+            "status": status,
+            "only_access": only_access,
+            "keep": keep
+        }
+    )
 
 @app.route("/new", methods=["GET","POST"])
 def new_resort():
