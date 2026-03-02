@@ -43,6 +43,8 @@ def get_conn():
 def init_db():
     with get_conn() as conn:
         with conn.cursor() as cur:
+
+            # 1️⃣ resorts
             cur.execute("""
             CREATE TABLE IF NOT EXISTS resorts (
                 id BIGSERIAL PRIMARY KEY,
@@ -52,15 +54,12 @@ def init_db():
                 website TEXT,
                 phone TEXT,
                 email TEXT,
-
                 price_week NUMERIC,
                 price_period TEXT,
                 price_notes TEXT,
-
                 status TEXT DEFAULT 'valutare',
                 keep_flag BOOLEAN DEFAULT FALSE,
                 notes TEXT,
-
                 wheelchair_access BOOLEAN DEFAULT FALSE,
                 beach_walkway BOOLEAN DEFAULT FALSE,
                 beach_bathroom_h BOOLEAN DEFAULT FALSE,
@@ -72,25 +71,21 @@ def init_db():
                 disabled_parking BOOLEAN DEFAULT FALSE,
                 step_free_paths BOOLEAN DEFAULT FALSE,
                 staff_assistance BOOLEAN DEFAULT FALSE,
-
                 created_at TIMESTAMPTZ,
                 updated_at TIMESTAMPTZ
             );
             """)
+
+            # 2️⃣ activity_log SENZA foreign key
             cur.execute("""
             CREATE TABLE IF NOT EXISTS activity_log (
                 id BIGSERIAL PRIMARY KEY,
-                resort_id BIGINT REFERENCES resorts(id) ON DELETE CASCADE,
+                resort_id BIGINT,
                 user_name TEXT,
                 action TEXT,
                 created_at TIMESTAMPTZ DEFAULT NOW()
             );
             """)
-
-try:
-    init_db()
-except Exception as e:
-    print("DB INIT ERROR:", e)
 
 def as_obj(d):
     return SimpleNamespace(**d)
