@@ -2,23 +2,14 @@ import os
 from datetime import datetime
 from types import SimpleNamespace
 
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
-FRIENDS = ["Alessandro", "Antonio", "Laura", "Roberta"]
-
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "change-me-please")
-
-
-# 🔐 LOGIN PROTECTION
-@app.before_request
-def require_login():
-    allowed_routes = ["login", "static"]
-    if request.endpoint not in allowed_routes and "user" not in session:
-        return redirect(url_for("login"))
-
+from flask import session
+FRIENDS = ["Alessandro", "Antonio", "Laura", "Roberta"]
 
 REGIONS = [
     "Abruzzo","Basilicata","Calabria","Campania","Emilia-Romagna","Friuli-Venezia Giulia",
@@ -26,11 +17,7 @@ REGIONS = [
     "Sicilia","Toscana","Trentino-Alto Adige","Umbria","Valle d'Aosta","Veneto"
 ]
 
-STATUS_CHOICES = [
-    ("valutare", "Da valutare"),
-    ("interessante", "Interessante"),
-    ("scartare", "Scartare")
-]
+STATUS_CHOICES = [("valutare", "Da valutare"), ("interessante", "Interessante"), ("scartare", "Scartare")]
 
 FEATURES = [
     ("wheelchair_access", "Accessibile in carrozzina"),
@@ -46,13 +33,12 @@ FEATURES = [
     ("staff_assistance", "Assistenza inclusiva"),
 ]
 
-
 def get_conn():
     dsn = os.environ.get("DATABASE_URL")
     if not dsn:
         raise RuntimeError("DATABASE_URL non configurato")
+    # su Render di solito va bene così; se ti crea problemi, togli sslmode
     return psycopg2.connect(dsn, sslmode="require")
-
 
 def init_db():
     with get_conn() as conn:
@@ -97,14 +83,11 @@ try:
 except Exception as e:
     print("DB INIT ERROR:", e)
 
-
 def as_obj(d):
     return SimpleNamespace(**d)
 
-
 def to_bool(v):
     return str(v).lower() in ("1","on","true","yes")
-
 
 def parse_form(f):
     data = {
@@ -135,14 +118,10 @@ def parse_form(f):
 
     return data
 
-
 def calc_access_score(resort):
     total = len(FEATURES)
     have = sum(1 for k,_ in FEATURES if getattr(resort, k))
     return have, total
-
-
-# 🔐 LOGIN ROUTES
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -159,14 +138,15 @@ def logout():
     session.clear()
     return redirect(url_for("login"))
 
-
-# =========================
-# ROUTES
-# =========================
-
 @app.route("/")
 def index():
+    if "user" not in session:
+        return redirect(url_for("login"))
     q = (request.args.get("q") or "").strip()
+    region = (request.args.get("region") or "").strip()
+    status = (request.args.get("status") or "").strip()
+    only_access = request.args.get("only_access", "")
+    keep = request.args.get("keep", "")
 
     where = []
     params = []
@@ -176,11 +156,27 @@ def index():
         like = f"%{q}%"
         params += [like, like, like, like]
 
-    sql = "SELECT * FROM resorts"
+    if region:
+        where.append("region = %s")
+        params.append(region)
 
+    if status:
+        where.append("status = %s")
+        params.append(status)
+
+    if keep == "1":
+        where.append("keep_flag = TRUE")
+
+    if only_access == "1":
+        where.append("""
+            wheelchair_access = TRUE
+            AND beach_bathroom_h = TRUE
+            AND (beach_walkway = TRUE OR beach_job_chair = TRUE)
+        """)
+
+    sql = "SELECT * FROM resorts"
     if where:
         sql += " WHERE " + " AND ".join(where)
-
     sql += " ORDER BY updated_at DESC NULLS LAST, created_at DESC NULLS LAST"
 
     with get_conn() as conn:
@@ -199,9 +195,8 @@ def index():
         resorts=resorts,
         regions=REGIONS,
         status_choices=STATUS_CHOICES,
-        filters={"q": q}
+        filters={"q": q, "region": region, "status": status, "only_access": only_access, "keep": keep}
     )
-
 
 @app.route("/new", methods=["GET","POST"])
 def new_resort():
@@ -227,7 +222,6 @@ def new_resort():
 
     return render_template("form.html", mode="new", regions=REGIONS, status_choices=STATUS_CHOICES, features=FEATURES, resort=None)
 
-
 @app.route("/view/<int:resort_id>")
 def view_resort(resort_id):
     with get_conn() as conn:
@@ -242,7 +236,6 @@ def view_resort(resort_id):
     resort = as_obj(r)
     have, total = calc_access_score(resort)
     return render_template("view.html", resort=resort, features=FEATURES, have=have, total=total)
-
 
 @app.route("/edit/<int:resort_id>", methods=["GET","POST"])
 def edit_resort(resort_id):
@@ -272,7 +265,6 @@ def edit_resort(resort_id):
 
     return render_template("form.html", mode="edit", regions=REGIONS, status_choices=STATUS_CHOICES, features=FEATURES, resort=as_obj(r))
 
-
 @app.route("/delete/<int:resort_id>", methods=["POST"])
 def delete_resort(resort_id):
     with get_conn() as conn:
@@ -281,7 +273,6 @@ def delete_resort(resort_id):
 
     flash("Eliminato 🗑️", "warning")
     return redirect(url_for("index"))
-
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
