@@ -1,17 +1,17 @@
 {% extends "base.html" %}
+{% block title %}{{ "Nuovo resort" if mode=="new" else "Modifica resort" }}{% endblock %}
 {% block content %}
 
-<div class="d-flex justify-content-between align-items-center mb-2">
+<div class="d-flex justify-content-between align-items-center mb-3">
   <div class="fs-5 fw-semibold">
-    {% if mode=="new" %}Nuovo Resort{% else %}Modifica Resort{% endif %}
+    {{ "Nuovo resort" if mode=="new" else "Modifica resort" }}
   </div>
-  {% if mode=="edit" and resort %}
-    <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('view_resort', resort_id=resort.id) }}">Torna</a>
-  {% endif %}
+  <a class="btn btn-outline-secondary btn-sm btn-pill" href="{{ url_for('index') }}">Torna</a>
 </div>
 
-<form class="card p-3 shadow-sm" method="post">
+<form class="card card-resort p-3" method="post">
   <div class="row g-2">
+
     <div class="col-12">
       <label class="form-label">Nome struttura *</label>
       <input class="form-control" name="name" required value="{{ resort.name if resort else '' }}">
@@ -26,6 +26,7 @@
         {% endfor %}
       </select>
     </div>
+
     <div class="col-5">
       <label class="form-label">Località</label>
       <input class="form-control" name="city" value="{{ resort.city if resort else '' }}">
@@ -40,6 +41,7 @@
       <label class="form-label">Telefono</label>
       <input class="form-control" name="phone" value="{{ resort.phone if resort else '' }}">
     </div>
+
     <div class="col-6">
       <label class="form-label">Email</label>
       <input class="form-control" name="email" value="{{ resort.email if resort else '' }}">
@@ -48,13 +50,12 @@
     <div class="col-12"><hr class="my-2"></div>
 
     <div class="col-12">
-      <div class="fw-semibold mb-1">♿ Accessibilità (spunta al volo)</div>
+      <div class="fw-semibold mb-1">♿ Accessibilità</div>
       <div class="row g-2">
         {% for key, label in features %}
           <div class="col-12 col-md-6">
             <div class="form-check">
-              <input class="form-check-input" type="checkbox" id="{{key}}" name="{{key}}"
-                     {% if resort and resort|attr(key) %}checked{% endif %}>
+              <input class="form-check-input" type="checkbox" id="{{key}}" name="{{key}}" {% if resort and resort|attr(key) %}checked{% endif %}>
               <label class="form-check-label" for="{{key}}">{{label}}</label>
             </div>
           </div>
@@ -91,20 +92,20 @@
     </div>
     <div class="col-5 d-flex align-items-end">
       <div class="form-check">
-        <input class="form-check-input" type="checkbox" id="keep_flag" name="keep_flag"
-               {% if resort and resort.keep_flag %}checked{% endif %}>
+        <input class="form-check-input" type="checkbox" id="keep_flag" name="keep_flag" {% if resort and resort.keep_flag %}checked{% endif %}>
         <label class="form-check-label" for="keep_flag">Da tenere</label>
       </div>
     </div>
 
     <div class="col-12">
       <label class="form-label">Note</label>
-      <textarea class="form-control" name="notes" rows="4" placeholder="cose utili, pro/contro, motivi scarto...">{{ resort.notes if resort else '' }}</textarea>
+      <textarea class="form-control" name="notes" rows="4" placeholder="pro/contro, motivi scarto...">{{ resort.notes if resort else '' }}</textarea>
     </div>
 
     <div class="col-12 d-grid mt-2">
-      <button class="btn btn-primary btn-lg">Salva</button>
+      <button class="btn btn-primary btn-lg btn-pill">Salva</button>
     </div>
+
   </div>
 </form>
 
