@@ -304,6 +304,12 @@ def edit_resort(resort_id):
 
         flash("Salvato ✅", "success")
         return redirect(url_for("view_resort", resort_id=resort_id))
+    
+    if "user" in session:
+    cur.execute("""
+        INSERT INTO activity_log (resort_id, user_name, action)
+        VALUES (%s, %s, %s)
+    """, (resort_id, session["user"], "UPDATED"))
 
     return render_template("form.html", mode="edit", regions=REGIONS, status_choices=STATUS_CHOICES, features=FEATURES, resort=as_obj(r))
 
