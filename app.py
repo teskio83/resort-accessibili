@@ -226,24 +226,28 @@ def new_resort():
         now = datetime.utcnow()
         data["created_at"] = now
         data["updated_at"] = now
-
+    
         cols = list(data.keys())
         placeholders = ", ".join(["%s"] * len(cols))
         values = [data[c] for c in cols]
-
+    
         with get_conn() as conn:
             with conn.cursor() as cur:
+    
+                # INSERIMENTO
                 cur.execute(
                     f"INSERT INTO resorts ({','.join(cols)}) VALUES ({placeholders}) RETURNING id",
                     values
                 )
                 resort_id = cur.fetchone()[0]
-                
-                cur.execute("""
-                    INSERT INTO activity_log (resort_id, user_name, action)
-                    VALUES (%s, %s, %s)
-                """, (resort_id, session["user"], "CREATED"))
-
+    
+                # LOG (SAFE)
+                if "user" in session:
+                    cur.execute("""
+                        INSERT INTO activity_log (resort_id, user_name, action)
+                        VALUES (%s, %s, %s)
+                    """, (resort_id, session["user"], "CREATED"))
+    
         flash("Resort inserito ✅", "success")
         return redirect(url_for("index"))
 
