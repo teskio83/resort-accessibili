@@ -297,6 +297,10 @@ def edit_resort(resort_id):
 
         with get_conn() as conn:
             with conn.cursor() as cur:
+                # UPDATE VERO
+                cur.execute(f"UPDATE resorts SET {sets} WHERE id=%s", values)
+
+                # LOG
                 cur.execute("""
                     INSERT INTO activity_log (resort_id, user_name, action)
                     VALUES (%s, %s, %s)
@@ -304,15 +308,15 @@ def edit_resort(resort_id):
 
         flash("Salvato ✅", "success")
         return redirect(url_for("view_resort", resort_id=resort_id))
-    
-    if "user" in session:
-    cur.execute("""
-        INSERT INTO activity_log (resort_id, user_name, action)
-        VALUES (%s, %s, %s)
-    """, (resort_id, session["user"], "UPDATED"))
 
-    return render_template("form.html", mode="edit", regions=REGIONS, status_choices=STATUS_CHOICES, features=FEATURES, resort=as_obj(r))
-
+    return render_template(
+        "form.html",
+        mode="edit",
+        regions=REGIONS,
+        status_choices=STATUS_CHOICES,
+        features=FEATURES,
+        resort=as_obj(r)
+    )
 
 @app.route("/delete/<int:resort_id>", methods=["POST"])
 def delete_resort(resort_id):
@@ -321,14 +325,19 @@ def delete_resort(resort_id):
 
     with get_conn() as conn:
         with conn.cursor() as cur:
+
+            # LOG PRIMA
             cur.execute("""
                 INSERT INTO activity_log (resort_id, user_name, action)
                 VALUES (%s, %s, %s)
             """, (resort_id, session["user"], "DELETED"))
 
+            # POI DELETE
+            cur.execute("DELETE FROM resorts WHERE id=%s", (resort_id,))
+
     flash("Eliminato 🗑️", "warning")
     return redirect(url_for("index"))
-
+    
 @app.route("/activity")
 def activity():
     if "user" not in session:
