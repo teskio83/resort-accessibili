@@ -354,6 +354,21 @@ def activity():
 
     return render_template("activity.html", activities=rows)
     
+@app.route("/__debug_tables")
+def debug_tables():
+    try:
+        with get_conn() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT table_name
+                    FROM information_schema.tables
+                    WHERE table_schema='public'
+                """)
+                rows = cur.fetchall()
+        return str(rows)
+    except Exception as e:
+        return "ERRORE: " + str(e)
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
