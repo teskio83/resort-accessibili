@@ -77,6 +77,15 @@ def init_db():
                 updated_at TIMESTAMPTZ
             );
             """)
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS activity_log (
+                id BIGSERIAL PRIMARY KEY,
+                resort_id BIGINT REFERENCES resorts(id) ON DELETE CASCADE,
+                user_name TEXT,
+                action TEXT,
+                created_at TIMESTAMPTZ DEFAULT NOW()
+            );
+            """)
 
 try:
     init_db()
@@ -225,9 +234,15 @@ def new_resort():
         with get_conn() as conn:
             with conn.cursor() as cur:
                 cur.execute(
-                    f"INSERT INTO resorts ({','.join(cols)}) VALUES ({placeholders})",
+                    f"INSERT INTO resorts ({','.join(cols)}) VALUES ({placeholders}) RETURNING id",
                     values
                 )
+                resort_id = cur.fetchone()[0]
+                
+                cur.execute("""
+                    INSERT INTO activity_log (resort_id, user_name, action)
+                    VALUES (%s, %s, %s)
+                """, (resort_id, session["user"], "CREATED"))
 
         flash("Resort inserito ✅", "success")
         return redirect(url_for("index"))
@@ -278,7 +293,10 @@ def edit_resort(resort_id):
 
         with get_conn() as conn:
             with conn.cursor() as cur:
-                cur.execute(f"UPDATE resorts SET {sets} WHERE id=%s", values)
+                cur.execute("""
+                    INSERT INTO activity_log (resort_id, user_name, action)
+                    VALUES (%s, %s, %s)
+                """, (resort_id, session["user"], "UPDATED"))
 
         flash("Salvato ✅", "success")
         return redirect(url_for("view_resort", resort_id=resort_id))
@@ -293,12 +311,30 @@ def delete_resort(resort_id):
 
     with get_conn() as conn:
         with conn.cursor() as cur:
-            cur.execute("DELETE FROM resorts WHERE id=%s", (resort_id,))
+            cur.execute("""
+                INSERT INTO activity_log (resort_id, user_name, action)
+                VALUES (%s, %s, %s)
+            """, (resort_id, session["user"], "DELETED"))
 
     flash("Eliminato 🗑️", "warning")
     return redirect(url_for("index"))
 
+@app.route("/activity")
+def activity():
+    if "user" not in session:
+        return redirect(url_for("login"))
 
+    with get_conn() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("""
+                SELECT * FROM activity_log
+                ORDER BY created_at DESC
+                LIMIT 50
+            """)
+            rows = cur.fetchall()
+
+    return render_template("activity.html", activities=rows)
+    
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
