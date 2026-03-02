@@ -38,13 +38,13 @@ def get_conn():
     dsn = os.environ.get("DATABASE_URL")
     if not dsn:
         raise RuntimeError("DATABASE_URL non configurato")
-    return psycopg2.connect(dsn, sslmode="require")
+    return psycopg2.connect(dsn)
 
 def init_db():
     with get_conn() as conn:
         with conn.cursor() as cur:
 
-            # 1️⃣ resorts
+            # TABella resorts
             cur.execute("""
             CREATE TABLE IF NOT EXISTS resorts (
                 id BIGSERIAL PRIMARY KEY,
@@ -76,7 +76,7 @@ def init_db():
             );
             """)
 
-            # 2️⃣ activity_log SENZA foreign key
+            # TABella activity_log (senza foreign key per evitare problemi)
             cur.execute("""
             CREATE TABLE IF NOT EXISTS activity_log (
                 id BIGSERIAL PRIMARY KEY,
@@ -86,6 +86,10 @@ def init_db():
                 created_at TIMESTAMPTZ DEFAULT NOW()
             );
             """)
+            
+@app.before_first_request
+def setup_database():
+    init_db()
 
 def as_obj(d):
     return SimpleNamespace(**d)
