@@ -63,6 +63,10 @@
       <div class="d-flex gap-2 align-items-center">
       
         <a class="btn btn-outline-secondary btn-sm btn-pill" href="{{ url_for('index') }}">Home</a>
+      
+        <!-- 👇 QUI -->
+        <a class="btn btn-outline-secondary btn-sm btn-pill" href="{{ url_for('activity') }}">Attività</a>
+      
         <a class="btn btn-primary btn-sm btn-pill" href="{{ url_for('new_resort') }}">+ Nuovo</a>
       
         {% if 'user' in session %}
