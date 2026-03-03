@@ -18,11 +18,17 @@
         <strong>{{ a.user_name }}</strong>
 
         {% if a.action == "creazione" %}
+          ha creato il resort
           <span class="badge bg-success ms-2">Creazione</span>
         {% elif a.action == "modifica" %}
+          ha modificato il resort
           <span class="badge bg-primary ms-2">Modifica</span>
         {% elif a.action == "eliminazione" %}
+          ha eliminato il resort
           <span class="badge bg-danger ms-2">Eliminazione</span>
+        {% else %}
+          ha fatto un'azione
+          <span class="badge bg-secondary ms-2">{{ a.action }}</span>
         {% endif %}
 
         <div class="muted small mt-1">
