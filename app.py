@@ -41,51 +41,54 @@ def get_conn():
     return psycopg2.connect(dsn)
 
 def init_db():
-    with get_conn() as conn:
-        with conn.cursor() as cur:
+    try:
+        with get_conn() as conn:
+            with conn.cursor() as cur:
 
-            # TABella resorts
-            cur.execute("""
-            CREATE TABLE IF NOT EXISTS resorts (
-                id BIGSERIAL PRIMARY KEY,
-                name TEXT NOT NULL,
-                region TEXT,
-                city TEXT,
-                website TEXT,
-                phone TEXT,
-                email TEXT,
-                price_week NUMERIC,
-                price_period TEXT,
-                price_notes TEXT,
-                status TEXT DEFAULT 'valutare',
-                keep_flag BOOLEAN DEFAULT FALSE,
-                notes TEXT,
-                wheelchair_access BOOLEAN DEFAULT FALSE,
-                beach_walkway BOOLEAN DEFAULT FALSE,
-                beach_bathroom_h BOOLEAN DEFAULT FALSE,
-                beach_job_chair BOOLEAN DEFAULT FALSE,
-                accessible_room BOOLEAN DEFAULT FALSE,
-                restaurant_accessible BOOLEAN DEFAULT FALSE,
-                pool_accessible BOOLEAN DEFAULT FALSE,
-                lift BOOLEAN DEFAULT FALSE,
-                disabled_parking BOOLEAN DEFAULT FALSE,
-                step_free_paths BOOLEAN DEFAULT FALSE,
-                staff_assistance BOOLEAN DEFAULT FALSE,
-                created_at TIMESTAMPTZ,
-                updated_at TIMESTAMPTZ
-            );
-            """)
+                cur.execute("""
+                CREATE TABLE IF NOT EXISTS resorts (
+                    id BIGSERIAL PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    region TEXT,
+                    city TEXT,
+                    website TEXT,
+                    phone TEXT,
+                    email TEXT,
+                    price_week NUMERIC,
+                    price_period TEXT,
+                    price_notes TEXT,
+                    status TEXT DEFAULT 'valutare',
+                    keep_flag BOOLEAN DEFAULT FALSE,
+                    notes TEXT,
+                    wheelchair_access BOOLEAN DEFAULT FALSE,
+                    beach_walkway BOOLEAN DEFAULT FALSE,
+                    beach_bathroom_h BOOLEAN DEFAULT FALSE,
+                    beach_job_chair BOOLEAN DEFAULT FALSE,
+                    accessible_room BOOLEAN DEFAULT FALSE,
+                    restaurant_accessible BOOLEAN DEFAULT FALSE,
+                    pool_accessible BOOLEAN DEFAULT FALSE,
+                    lift BOOLEAN DEFAULT FALSE,
+                    disabled_parking BOOLEAN DEFAULT FALSE,
+                    step_free_paths BOOLEAN DEFAULT FALSE,
+                    staff_assistance BOOLEAN DEFAULT FALSE,
+                    created_at TIMESTAMPTZ,
+                    updated_at TIMESTAMPTZ
+                );
+                """)
 
-            # TABella activity_log (senza foreign key per evitare problemi)
-            cur.execute("""
-            CREATE TABLE IF NOT EXISTS activity_log (
-                id BIGSERIAL PRIMARY KEY,
-                resort_id BIGINT,
-                user_name TEXT,
-                action TEXT,
-                created_at TIMESTAMPTZ DEFAULT NOW()
-            );
-            """)
+                cur.execute("""
+                CREATE TABLE IF NOT EXISTS activity_log (
+                    id BIGSERIAL PRIMARY KEY,
+                    resort_id BIGINT,
+                    user_name TEXT,
+                    action TEXT,
+                    created_at TIMESTAMPTZ DEFAULT NOW()
+                );
+                """)
+
+    except Exception as e:
+        print("INIT DB ERROR:", e)
+
             
 @app.before_first_request
 def setup_database():
