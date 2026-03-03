@@ -23,23 +23,26 @@
   {% if activity %}
     <ul class="list-group list-group-flush">
       {% for a in activity %}
-        <li class="list-group-item small d-flex justify-content-between align-items-center">
+        <li class="list-group-item small">
+          {{ a.created_at }} –
+          <strong>{{ a.user_name }}</strong>
 
-          <div>
-            {{ a.created_at.strftime('%d/%m/%Y %H:%M') }} –
-            <strong>{{ a.user_name }}</strong>
-
-            {% if a.action == "creazione" %}
-              <span class="badge bg-success ms-2">Creazione</span>
-            {% elif a.action == "modifica" %}
-              <span class="badge bg-primary ms-2">Modifica</span>
-            {% elif a.action == "eliminazione" %}
-              <span class="badge bg-danger ms-2">Eliminazione</span>
-            {% else %}
-              <span class="badge bg-secondary ms-2">{{ a.action }}</span>
-            {% endif %}
-          </div>
-
+          {% if a.action == "creazione" %}
+            <span class="badge bg-success ms-2">Creazione</span>
+          {% elif a.action == "modifica" %}
+            <span class="badge bg-primary ms-2">Modifica</span>
+          {% elif a.action == "eliminazione" %}
+            <span class="badge bg-danger ms-2">Eliminazione</span>
+          {% else %}
+            <span class="badge bg-secondary ms-2">{{ a.action }}</span>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="small text-secondary">Nessuna attività registrata</div>
+  {% endif %}
+</div>
         </li>
       {% endfor %}
     </ul>
