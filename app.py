@@ -11,6 +11,7 @@ FRIENDS = ["Alessandro", "Antonio", "Laura", "Roberta"]
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "change-me-please")
+init_db()
 
 REGIONS = [
     "Abruzzo","Basilicata","Calabria","Campania","Emilia-Romagna","Friuli-Venezia Giulia",
