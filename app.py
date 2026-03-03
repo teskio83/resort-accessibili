@@ -9,7 +9,6 @@ from psycopg2.extras import RealDictCursor
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "change-me-please")
 
-# 👥 Amici autorizzati
 ALLOWED_USERS = ["ALESSANDRO", "ANTONIO", "LAURA", "ROBERTA"]
 
 REGIONS = [
@@ -43,7 +42,7 @@ def get_conn():
 def init_db():
     with get_conn() as conn:
         with conn.cursor() as cur:
-            # Crea tabella base
+
             cur.execute("""
             CREATE TABLE IF NOT EXISTS resorts (
                 id BIGSERIAL PRIMARY KEY,
@@ -53,15 +52,12 @@ def init_db():
                 website TEXT,
                 phone TEXT,
                 email TEXT,
-
                 price_week NUMERIC,
                 price_period TEXT,
                 price_notes TEXT,
-
                 status TEXT DEFAULT 'valutare',
                 keep_flag BOOLEAN DEFAULT FALSE,
                 notes TEXT,
-
                 wheelchair_access BOOLEAN DEFAULT FALSE,
                 beach_walkway BOOLEAN DEFAULT FALSE,
                 beach_bathroom_h BOOLEAN DEFAULT FALSE,
@@ -73,15 +69,23 @@ def init_db():
                 disabled_parking BOOLEAN DEFAULT FALSE,
                 step_free_paths BOOLEAN DEFAULT FALSE,
                 staff_assistance BOOLEAN DEFAULT FALSE,
-
+                created_by TEXT,
+                updated_by TEXT,
                 created_at TIMESTAMPTZ,
                 updated_at TIMESTAMPTZ
             );
             """)
 
-            # 🔥 AGGIUNGI COLONNE SE MANCANO
-            cur.execute("ALTER TABLE resorts ADD COLUMN IF NOT EXISTS created_by TEXT;")
-            cur.execute("ALTER TABLE resorts ADD COLUMN IF NOT EXISTS updated_by TEXT;")
+            # Tabella attività
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS resort_activity (
+                id BIGSERIAL PRIMARY KEY,
+                resort_id BIGINT REFERENCES resorts(id) ON DELETE CASCADE,
+                action TEXT,
+                user_name TEXT,
+                created_at TIMESTAMPTZ
+            );
+            """)
 
 try:
     init_db()
@@ -102,11 +106,9 @@ def parse_form(f):
         "website": (f.get("website") or "").strip() or None,
         "phone": (f.get("phone") or "").strip() or None,
         "email": (f.get("email") or "").strip() or None,
-
         "price_week": (f.get("price_week") or "").strip() or None,
         "price_period": (f.get("price_period") or "").strip() or None,
         "price_notes": (f.get("price_notes") or "").strip() or None,
-
         "status": f.get("status") or "valutare",
         "keep_flag": to_bool(f.get("keep_flag")),
         "notes": (f.get("notes") or "").strip() or None,
@@ -129,74 +131,28 @@ def calc_access_score(resort):
     return have, total
 
 
-# 🔐 LOGIN
-
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
         username = request.form["username"].upper()
         if username in ALLOWED_USERS:
             session["user"] = username
-            flash("Benvenuto " + username, "success")
             return redirect(url_for("index"))
-        flash("Utente non valido", "danger")
-
     return render_template("login.html", users=ALLOWED_USERS)
-
 
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect(url_for("login"))
 
-
-# 🔎 INDEX
-
 @app.route("/")
 def index():
     if "user" not in session:
         return redirect(url_for("login"))
 
-    q = (request.args.get("q") or "").strip()
-    region = (request.args.get("region") or "").strip()
-    status = (request.args.get("status") or "").strip()
-    only_access = request.args.get("only_access", "")
-    keep = request.args.get("keep", "")
-
-    where = []
-    params = []
-
-    if q:
-        where.append("(name ILIKE %s OR city ILIKE %s OR notes ILIKE %s OR region ILIKE %s)")
-        like = f"%{q}%"
-        params += [like, like, like, like]
-
-    if region:
-        where.append("region = %s")
-        params.append(region)
-
-    if status:
-        where.append("status = %s")
-        params.append(status)
-
-    if keep == "1":
-        where.append("keep_flag = TRUE")
-
-    if only_access == "1":
-        where.append("""
-            wheelchair_access = TRUE
-            AND beach_bathroom_h = TRUE
-            AND (beach_walkway = TRUE OR beach_job_chair = TRUE)
-        """)
-
-    sql = "SELECT * FROM resorts"
-    if where:
-        sql += " WHERE " + " AND ".join(where)
-    sql += " ORDER BY updated_at DESC NULLS LAST, created_at DESC NULLS LAST"
-
     with get_conn() as conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute(sql, params)
+            cur.execute("SELECT * FROM resorts ORDER BY updated_at DESC NULLS LAST")
             rows = cur.fetchall()
 
     resorts = []
@@ -205,16 +161,9 @@ def index():
         have, total = calc_access_score(obj)
         resorts.append((obj, have, total))
 
-    return render_template(
-        "index.html",
-        resorts=resorts,
-        regions=REGIONS,
-        status_choices=STATUS_CHOICES,
-        filters={"q": q, "region": region, "status": status, "only_access": only_access, "keep": keep}
-    )
-
-
-# ➕ NEW
+    return render_template("index.html", resorts=resorts,
+                           regions=REGIONS, status_choices=STATUS_CHOICES,
+                           filters={})
 
 @app.route("/new", methods=["GET","POST"])
 def new_resort():
@@ -236,17 +185,21 @@ def new_resort():
         with get_conn() as conn:
             with conn.cursor() as cur:
                 cur.execute(
-                    f"INSERT INTO resorts ({','.join(cols)}) VALUES ({placeholders})",
+                    f"INSERT INTO resorts ({','.join(cols)}) VALUES ({placeholders}) RETURNING id",
                     values
                 )
+                new_id = cur.fetchone()[0]
 
-        flash("Resort inserito ✅", "success")
+                cur.execute(
+                    "INSERT INTO resort_activity (resort_id, action, user_name, created_at) VALUES (%s,%s,%s,%s)",
+                    (new_id, "creazione", session["user"], now)
+                )
+
         return redirect(url_for("index"))
 
-    return render_template("form.html", mode="new", regions=REGIONS, status_choices=STATUS_CHOICES, features=FEATURES, resort=None)
-
-
-# 👁 VIEW
+    return render_template("form.html", mode="new",
+                           regions=REGIONS, status_choices=STATUS_CHOICES,
+                           features=FEATURES, resort=None)
 
 @app.route("/view/<int:resort_id>")
 def view_resort(resort_id):
@@ -258,30 +211,26 @@ def view_resort(resort_id):
             cur.execute("SELECT * FROM resorts WHERE id=%s", (resort_id,))
             r = cur.fetchone()
 
+            cur.execute(
+                "SELECT * FROM resort_activity WHERE resort_id=%s ORDER BY created_at DESC",
+                (resort_id,)
+            )
+            activity = cur.fetchall()
+
     if not r:
-        flash("Resort non trovato", "danger")
         return redirect(url_for("index"))
 
     resort = as_obj(r)
     have, total = calc_access_score(resort)
-    return render_template("view.html", resort=resort, features=FEATURES, have=have, total=total)
 
-
-# ✏ EDIT
+    return render_template("view.html", resort=resort,
+                           features=FEATURES, have=have,
+                           total=total, activity=activity)
 
 @app.route("/edit/<int:resort_id>", methods=["GET","POST"])
 def edit_resort(resort_id):
     if "user" not in session:
         return redirect(url_for("login"))
-
-    with get_conn() as conn:
-        with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute("SELECT * FROM resorts WHERE id=%s", (resort_id,))
-            r = cur.fetchone()
-
-    if not r:
-        flash("Resort non trovato", "danger")
-        return redirect(url_for("index"))
 
     if request.method == "POST":
         data = parse_form(request.form)
@@ -296,13 +245,21 @@ def edit_resort(resort_id):
             with conn.cursor() as cur:
                 cur.execute(f"UPDATE resorts SET {sets} WHERE id=%s", values)
 
-        flash("Salvato ✅", "success")
+                cur.execute(
+                    "INSERT INTO resort_activity (resort_id, action, user_name, created_at) VALUES (%s,%s,%s,%s)",
+                    (resort_id, "modifica", session["user"], datetime.utcnow())
+                )
+
         return redirect(url_for("view_resort", resort_id=resort_id))
 
-    return render_template("form.html", mode="edit", regions=REGIONS, status_choices=STATUS_CHOICES, features=FEATURES, resort=as_obj(r))
+    with get_conn() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("SELECT * FROM resorts WHERE id=%s", (resort_id,))
+            r = cur.fetchone()
 
-
-# 🗑 DELETE
+    return render_template("form.html", mode="edit",
+                           regions=REGIONS, status_choices=STATUS_CHOICES,
+                           features=FEATURES, resort=as_obj(r))
 
 @app.route("/delete/<int:resort_id>", methods=["POST"])
 def delete_resort(resort_id):
@@ -313,10 +270,8 @@ def delete_resort(resort_id):
         with conn.cursor() as cur:
             cur.execute("DELETE FROM resorts WHERE id=%s", (resort_id,))
 
-    flash("Eliminato 🗑️", "warning")
     return redirect(url_for("index"))
-
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    app.run(host="0.0.0.0", port=port)
