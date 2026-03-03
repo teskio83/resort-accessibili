@@ -2,7 +2,7 @@ import os
 from datetime import datetime
 from types import SimpleNamespace
 
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, session
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
@@ -11,12 +11,45 @@ app.secret_key = os.environ.get("SECRET_KEY", "dev-secret")
 
 FRIENDS = ["Alessandro", "Antonio", "Laura", "Roberta"]
 
+
 # -------------------------
 # DATABASE
 # -------------------------
 
 def get_conn():
     return psycopg2.connect(os.environ.get("DATABASE_URL"))
+
+
+# -------------------------
+# SETUP (manuale)
+# -------------------------
+
+@app.route("/setup")
+def setup():
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS resorts (
+                id BIGSERIAL PRIMARY KEY,
+                name TEXT NOT NULL,
+                created_at TIMESTAMPTZ,
+                updated_at TIMESTAMPTZ
+            );
+            """)
+
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS activity_log (
+                id BIGSERIAL PRIMARY KEY,
+                resort_id BIGINT,
+                user_name TEXT,
+                action TEXT,
+                created_at TIMESTAMPTZ DEFAULT NOW()
+            );
+            """)
+
+    return "DB OK"
+
 
 # -------------------------
 # LOGIN
@@ -31,14 +64,17 @@ def login():
             return redirect(url_for("index"))
     return render_template("login.html", friends=FRIENDS)
 
+
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect(url_for("login"))
 
+
 def require_login():
     if "user" not in session:
         return redirect(url_for("login"))
+
 
 # -------------------------
 # HOME
@@ -56,6 +92,7 @@ def index():
 
     resorts = [SimpleNamespace(**r) for r in rows]
     return render_template("index.html", resorts=resorts)
+
 
 # -------------------------
 # NEW
@@ -88,6 +125,7 @@ def new_resort():
 
     return render_template("form.html")
 
+
 # -------------------------
 # DELETE
 # -------------------------
@@ -99,6 +137,7 @@ def delete_resort(resort_id):
 
     with get_conn() as conn:
         with conn.cursor() as cur:
+
             cur.execute("""
                 INSERT INTO activity_log (resort_id, user_name, action)
                 VALUES (%s,%s,%s)
@@ -107,6 +146,7 @@ def delete_resort(resort_id):
             cur.execute("DELETE FROM resorts WHERE id=%s", (resort_id,))
 
     return redirect(url_for("index"))
+
 
 # -------------------------
 # ACTIVITY
@@ -123,6 +163,7 @@ def activity():
             logs = cur.fetchall()
 
     return render_template("activity.html", logs=logs)
+
 
 # -------------------------
 
