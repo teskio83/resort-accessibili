@@ -88,7 +88,6 @@ def init_db():
 
     except Exception as e:
         print("INIT DB ERROR:", e)
-
             
 @app.before_first_request
 def setup_database():
