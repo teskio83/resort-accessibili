@@ -212,7 +212,7 @@ def view_resort(resort_id):
             r = cur.fetchone()
 
             cur.execute(
-                "SELECT * FROM resort_activity WHERE resort_id=%s ORDER BY created_at DESC",
+                "SELECT * FROM resort_activity WHERE resort_id=%s ORDER BY created_at DESC LIMIT 3",
                 (resort_id,)
             )
             activity = cur.fetchall()
