@@ -2,12 +2,15 @@ import os
 from datetime import datetime
 from types import SimpleNamespace
 
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "change-me-please")
+
+# 👥 Amici autorizzati
+ALLOWED_USERS = ["ALESSANDRO", "ANTONIO", "LAURA", "ROBERTA"]
 
 REGIONS = [
     "Abruzzo","Basilicata","Calabria","Campania","Emilia-Romagna","Friuli-Venezia Giulia",
@@ -35,7 +38,6 @@ def get_conn():
     dsn = os.environ.get("DATABASE_URL")
     if not dsn:
         raise RuntimeError("DATABASE_URL non configurato")
-    # su Render di solito va bene così; se ti crea problemi, togli sslmode
     return psycopg2.connect(dsn, sslmode="require")
 
 def init_db():
@@ -70,6 +72,9 @@ def init_db():
                 disabled_parking BOOLEAN DEFAULT FALSE,
                 step_free_paths BOOLEAN DEFAULT FALSE,
                 staff_assistance BOOLEAN DEFAULT FALSE,
+
+                created_by TEXT,
+                updated_by TEXT,
 
                 created_at TIMESTAMPTZ,
                 updated_at TIMESTAMPTZ
@@ -122,8 +127,34 @@ def calc_access_score(resort):
     return have, total
 
 
+# 🔐 LOGIN
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        username = request.form["username"].upper()
+        if username in ALLOWED_USERS:
+            session["user"] = username
+            flash("Benvenuto " + username, "success")
+            return redirect(url_for("index"))
+        flash("Utente non valido", "danger")
+
+    return render_template("login.html", users=ALLOWED_USERS)
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
+
+
+# 🔎 INDEX
+
 @app.route("/")
 def index():
+    if "user" not in session:
+        return redirect(url_for("login"))
+
     q = (request.args.get("q") or "").strip()
     region = (request.args.get("region") or "").strip()
     status = (request.args.get("status") or "").strip()
@@ -180,13 +211,21 @@ def index():
         filters={"q": q, "region": region, "status": status, "only_access": only_access, "keep": keep}
     )
 
+
+# ➕ NEW
+
 @app.route("/new", methods=["GET","POST"])
 def new_resort():
+    if "user" not in session:
+        return redirect(url_for("login"))
+
     if request.method == "POST":
         data = parse_form(request.form)
         now = datetime.utcnow()
         data["created_at"] = now
         data["updated_at"] = now
+        data["created_by"] = session["user"]
+        data["updated_by"] = session["user"]
 
         cols = list(data.keys())
         placeholders = ", ".join(["%s"] * len(cols))
@@ -204,8 +243,14 @@ def new_resort():
 
     return render_template("form.html", mode="new", regions=REGIONS, status_choices=STATUS_CHOICES, features=FEATURES, resort=None)
 
+
+# 👁 VIEW
+
 @app.route("/view/<int:resort_id>")
 def view_resort(resort_id):
+    if "user" not in session:
+        return redirect(url_for("login"))
+
     with get_conn() as conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute("SELECT * FROM resorts WHERE id=%s", (resort_id,))
@@ -219,8 +264,14 @@ def view_resort(resort_id):
     have, total = calc_access_score(resort)
     return render_template("view.html", resort=resort, features=FEATURES, have=have, total=total)
 
+
+# ✏ EDIT
+
 @app.route("/edit/<int:resort_id>", methods=["GET","POST"])
 def edit_resort(resort_id):
+    if "user" not in session:
+        return redirect(url_for("login"))
+
     with get_conn() as conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute("SELECT * FROM resorts WHERE id=%s", (resort_id,))
@@ -233,6 +284,7 @@ def edit_resort(resort_id):
     if request.method == "POST":
         data = parse_form(request.form)
         data["updated_at"] = datetime.utcnow()
+        data["updated_by"] = session["user"]
 
         cols = list(data.keys())
         sets = ", ".join([f"{c}=%s" for c in cols])
@@ -247,14 +299,21 @@ def edit_resort(resort_id):
 
     return render_template("form.html", mode="edit", regions=REGIONS, status_choices=STATUS_CHOICES, features=FEATURES, resort=as_obj(r))
 
+
+# 🗑 DELETE
+
 @app.route("/delete/<int:resort_id>", methods=["POST"])
 def delete_resort(resort_id):
+    if "user" not in session:
+        return redirect(url_for("login"))
+
     with get_conn() as conn:
         with conn.cursor() as cur:
             cur.execute("DELETE FROM resorts WHERE id=%s", (resort_id,))
 
     flash("Eliminato 🗑️", "warning")
     return redirect(url_for("index"))
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
