@@ -89,6 +89,7 @@ def init_db():
 
     except Exception as e:
         print("INIT DB ERROR:", e)
+init_db()
             
 def as_obj(d):
     return SimpleNamespace(**d)
