@@ -43,6 +43,7 @@ def get_conn():
 def init_db():
     with get_conn() as conn:
         with conn.cursor() as cur:
+            # Crea tabella base
             cur.execute("""
             CREATE TABLE IF NOT EXISTS resorts (
                 id BIGSERIAL PRIMARY KEY,
@@ -73,13 +74,14 @@ def init_db():
                 step_free_paths BOOLEAN DEFAULT FALSE,
                 staff_assistance BOOLEAN DEFAULT FALSE,
 
-                created_by TEXT,
-                updated_by TEXT,
-
                 created_at TIMESTAMPTZ,
                 updated_at TIMESTAMPTZ
             );
             """)
+
+            # 🔥 AGGIUNGI COLONNE SE MANCANO
+            cur.execute("ALTER TABLE resorts ADD COLUMN IF NOT EXISTS created_by TEXT;")
+            cur.execute("ALTER TABLE resorts ADD COLUMN IF NOT EXISTS updated_by TEXT;")
 
 try:
     init_db()
