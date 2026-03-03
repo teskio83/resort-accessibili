@@ -234,32 +234,68 @@ def edit_resort(resort_id):
 
     if request.method == "POST":
         data = parse_form(request.form)
-        data["updated_at"] = datetime.utcnow()
-        data["updated_by"] = session["user"]
-
-        cols = list(data.keys())
-        sets = ", ".join([f"{c}=%s" for c in cols])
-        values = [data[c] for c in cols] + [resort_id]
 
         with get_conn() as conn:
-            with conn.cursor() as cur:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+
+                # 🔎 Recupero dati vecchi
+                cur.execute("SELECT * FROM resorts WHERE id=%s", (resort_id,))
+                old = cur.fetchone()
+                if not old:
+                    return redirect(url_for("index"))
+
+                changes = []
+
+                # Campi che vogliamo tracciare
+                tracked_fields = [
+                    "price_week",
+                    "status",
+                    "keep_flag",
+                    "notes"
+                ]
+
+                for field in tracked_fields:
+                    old_val = old.get(field)
+                    new_val = data.get(field)
+
+                    if old_val != new_val:
+                        changes.append(
+                            f"{field}: {old_val} → {new_val}"
+                        )
+
+                # Aggiorno resort
+                data["updated_at"] = datetime.utcnow()
+                data["updated_by"] = session["user"]
+
+                cols = list(data.keys())
+                sets = ", ".join([f"{c}=%s" for c in cols])
+                values = [data[c] for c in cols] + [resort_id]
+
                 cur.execute(f"UPDATE resorts SET {sets} WHERE id=%s", values)
 
-                cur.execute(
-                    "INSERT INTO resort_activity (resort_id, action, user_name, created_at) VALUES (%s,%s,%s,%s)",
-                    (resort_id, "modifica", session["user"], datetime.utcnow())
-                )
+                # Se ci sono modifiche reali, le salvo
+                if changes:
+                    action_text = "modifica\n" + "\n".join(changes)
+
+                    cur.execute(
+                        "INSERT INTO resort_activity (resort_id, action, user_name, created_at) VALUES (%s,%s,%s,%s)",
+                        (resort_id, action_text, session["user"], datetime.utcnow())
+                    )
 
         return redirect(url_for("view_resort", resort_id=resort_id))
 
+    # GET
     with get_conn() as conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute("SELECT * FROM resorts WHERE id=%s", (resort_id,))
             r = cur.fetchone()
 
-    return render_template("form.html", mode="edit",
-                           regions=REGIONS, status_choices=STATUS_CHOICES,
-                           features=FEATURES, resort=as_obj(r))
+    return render_template("form.html",
+                           mode="edit",
+                           regions=REGIONS,
+                           status_choices=STATUS_CHOICES,
+                           features=FEATURES,
+                           resort=as_obj(r))
 
 @app.route("/delete/<int:resort_id>", methods=["POST"])
 def delete_resort(resort_id):
