@@ -1,7 +1,5 @@
 import os
 from datetime import datetime
-from types import SimpleNamespace
-
 from flask import Flask, render_template, request, redirect, url_for, session
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -11,24 +9,18 @@ app.secret_key = os.environ.get("SECRET_KEY", "dev-secret")
 
 FRIENDS = ["Alessandro", "Antonio", "Laura", "Roberta"]
 
-
-# -------------------------
-# DATABASE
-# -------------------------
-
 def get_conn():
-    return psycopg2.connect(os.environ.get("DATABASE_URL"))
+    return psycopg2.connect(os.environ["DATABASE_URL"])
 
 
 # -------------------------
-# SETUP (manuale)
+# SETUP MANUALE (una sola volta)
 # -------------------------
 
 @app.route("/setup")
 def setup():
     with get_conn() as conn:
         with conn.cursor() as cur:
-
             cur.execute("""
             CREATE TABLE IF NOT EXISTS resorts (
                 id BIGSERIAL PRIMARY KEY,
@@ -37,17 +29,6 @@ def setup():
                 updated_at TIMESTAMPTZ
             );
             """)
-
-            cur.execute("""
-            CREATE TABLE IF NOT EXISTS activity_log (
-                id BIGSERIAL PRIMARY KEY,
-                resort_id BIGINT,
-                user_name TEXT,
-                action TEXT,
-                created_at TIMESTAMPTZ DEFAULT NOW()
-            );
-            """)
-
     return "DB OK"
 
 
@@ -71,11 +52,6 @@ def logout():
     return redirect(url_for("login"))
 
 
-def require_login():
-    if "user" not in session:
-        return redirect(url_for("login"))
-
-
 # -------------------------
 # HOME
 # -------------------------
@@ -88,9 +64,8 @@ def index():
     with get_conn() as conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute("SELECT * FROM resorts ORDER BY updated_at DESC NULLS LAST")
-            rows = cur.fetchall()
+            resorts = cur.fetchall()
 
-    resorts = [SimpleNamespace(**r) for r in rows]
     return render_template("index.html", resorts=resorts)
 
 
@@ -112,60 +87,12 @@ def new_resort():
                 cur.execute("""
                     INSERT INTO resorts (name, created_at, updated_at)
                     VALUES (%s,%s,%s)
-                    RETURNING id
                 """, (name, now, now))
-                resort_id = cur.fetchone()[0]
-
-                cur.execute("""
-                    INSERT INTO activity_log (resort_id, user_name, action)
-                    VALUES (%s,%s,%s)
-                """, (resort_id, session["user"], "CREATED"))
 
         return redirect(url_for("index"))
 
     return render_template("form.html")
 
-
-# -------------------------
-# DELETE
-# -------------------------
-
-@app.route("/delete/<int:resort_id>", methods=["POST"])
-def delete_resort(resort_id):
-    if "user" not in session:
-        return redirect(url_for("login"))
-
-    with get_conn() as conn:
-        with conn.cursor() as cur:
-
-            cur.execute("""
-                INSERT INTO activity_log (resort_id, user_name, action)
-                VALUES (%s,%s,%s)
-            """, (resort_id, session["user"], "DELETED"))
-
-            cur.execute("DELETE FROM resorts WHERE id=%s", (resort_id,))
-
-    return redirect(url_for("index"))
-
-
-# -------------------------
-# ACTIVITY
-# -------------------------
-
-@app.route("/activity")
-def activity():
-    if "user" not in session:
-        return redirect(url_for("login"))
-
-    with get_conn() as conn:
-        with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute("SELECT * FROM activity_log ORDER BY created_at DESC LIMIT 50")
-            logs = cur.fetchall()
-
-    return render_template("activity.html", logs=logs)
-
-
-# -------------------------
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
