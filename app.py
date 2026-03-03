@@ -272,6 +272,34 @@ def delete_resort(resort_id):
 
     return redirect(url_for("index"))
 
+@app.route("/resort/<int:resort_id>/history")
+def resort_history(resort_id):
+    if "user" not in session:
+        return redirect(url_for("login"))
+
+    with get_conn() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("SELECT name FROM resorts WHERE id=%s", (resort_id,))
+            resort = cur.fetchone()
+
+            if not resort:
+                return redirect(url_for("index"))
+
+            cur.execute("""
+                SELECT *
+                FROM resort_activity
+                WHERE resort_id=%s
+                ORDER BY created_at DESC
+            """, (resort_id,))
+            activities = cur.fetchall()
+
+    return render_template(
+        "activity.html",
+        activities=activities,
+        resort_name=resort["name"],
+        resort_id=resort_id
+    )
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
