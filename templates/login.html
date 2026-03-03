@@ -1,12 +1,24 @@
 {% extends "base.html" %}
+{% block title %}Accesso{% endblock %}
 {% block content %}
-<h3>Login</h3>
-<form method="post">
-  <select name="name" class="form-select">
-    {% for f in friends %}
-      <option value="{{ f }}">{{ f }}</option>
-    {% endfor %}
-  </select>
-  <button class="btn btn-primary mt-3">Entra</button>
-</form>
+
+<div class="row justify-content-center">
+  <div class="col-12 col-md-4">
+    <div class="card card-resort p-4 text-center">
+      <div class="fs-5 fw-semibold mb-3">Chi sei?</div>
+
+      <form method="post">
+        <div class="d-grid gap-2">
+          {% for u in users %}
+            <button name="username" value="{{u}}" class="btn btn-primary btn-pill">
+              {{u}}
+            </button>
+          {% endfor %}
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
+
 {% endblock %}
