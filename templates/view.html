@@ -77,6 +77,25 @@
       <div class="muted small">Note</div>
       <div>{{ resort.notes or "—" }}</div>
     </div>
+
+    <!-- 🔍 TRACCIAMENTO MODIFICHE -->
+    <div class="col-12"><hr class="my-2"></div>
+
+    <div class="col-12">
+      <div class="muted small">Storico</div>
+      <div class="small">
+        👤 Inserito da: <strong>{{ resort.created_by or "—" }}</strong>
+        {% if resort.created_at %}
+          il {{ resort.created_at.strftime('%d/%m/%Y %H:%M') }}
+        {% endif %}
+        <br>
+        ✏ Ultima modifica: <strong>{{ resort.updated_by or "—" }}</strong>
+        {% if resort.updated_at %}
+          il {{ resort.updated_at.strftime('%d/%m/%Y %H:%M') }}
+        {% endif %}
+      </div>
+    </div>
+
   </div>
 </div>
 
