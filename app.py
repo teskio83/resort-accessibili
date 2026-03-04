@@ -275,8 +275,6 @@ def view_resort(resort_id):
 
     resort = as_obj(r)
     have, total = calc_access_score(resort)
-
-    import urllib.parse
     
     map_query = f"{resort.name} {(resort.city or '')} {(resort.region or '')}".strip()
     map_url = "https://www.google.com/maps/search/?api=1&query=" + urllib.parse.quote_plus(map_query)
