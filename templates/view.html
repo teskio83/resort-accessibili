@@ -18,9 +18,10 @@
        href="{{ url_for('edit_resort', resort_id=resort.id) }}">Modifica</a>
 
     <a class="btn btn-outline-success btn-sm btn-pill"
-       target="_blank" rel="noopener"
-       href="{{ map_url }}">
-      📍 Maps
+       target="_blank"
+       rel="noopener"
+       href="{{ map_url or '#' }}">
+       📍 Maps
     </a>
 
     <a class="btn btn-outline-dark btn-sm btn-pill"
