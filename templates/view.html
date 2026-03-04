@@ -83,7 +83,7 @@
     <div class="col-12 col-md-6">
       <div class="muted small">Sito</div>
       {% if resort.website %}
-        <a href="{{ resort.website }}" target="_blank" rel="noopener">{{ resort.website }}</a>
+        <a href="{{ resort.website }}" target="_blank" rel="noopener">{{ resort.website or "—" }}</a>
       {% else %}
         <div class="text-secondary">—</div>
       {% endif %}
@@ -103,7 +103,7 @@
 
     <div class="col-6">
       <div class="muted small">Prezzo settimana</div>
-      <div>{% if resort.price_week %}€ {{ resort.price_week }}{% else %}—{% endif %}</div>
+      <div>{% if resort.price_week %}€ {{ resort.price_week or "—" }}{% else %}—{% endif %}</div>
     </div>
 
     <div class="col-6">
