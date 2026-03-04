@@ -107,17 +107,17 @@ def to_bool(v):
 def parse_form(f):
     data = {
         "name": (f.get("name") or "").strip() or "Senza nome",
-        "region": (f.get("region") or "").strip() or None,
-        "city": (f.get("city") or "").strip() or None,
-        "website": (f.get("website") or "").strip() or None,
-        "phone": (f.get("phone") or "").strip() or None,
-        "email": (f.get("email") or "").strip() or None,
-        "price_week": (f.get("price_week") or "").strip() or None,
-        "price_period": (f.get("price_period") or "").strip() or None,
-        "price_notes": (f.get("price_notes") or "").strip() or None,
+        "region": (f.get("region") or "").strip(),
+        "city": (f.get("city") or "").strip(),
+        "website": (f.get("website") or "").strip(),
+        "phone": (f.get("phone") or "").strip(),
+        "email": (f.get("email") or "").strip(),
+        "price_week": (f.get("price_week") or "").strip(),
+        "price_period": (f.get("price_period") or "").strip(),
+        "price_notes": (f.get("price_notes") or "").strip(),
         "status": f.get("status") or "valutare",
         "keep_flag": to_bool(f.get("keep_flag")),
-        "notes": (f.get("notes") or "").strip() or None,
+        "notes": (f.get("notes") or "").strip(),
     }
 
     for key, _ in FEATURES:
@@ -128,6 +128,8 @@ def parse_form(f):
             data["price_week"] = float(str(data["price_week"]).replace(",", "."))
         except ValueError:
             data["price_week"] = None
+    else:
+        data["price_week"] = None
 
     return data
 
