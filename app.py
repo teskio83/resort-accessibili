@@ -1,11 +1,11 @@
 import os
 from datetime import datetime
+import pytz
 from types import SimpleNamespace
 
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 import psycopg2
 from psycopg2.extras import RealDictCursor
-import pytz
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "change-me-please")
