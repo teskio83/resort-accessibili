@@ -32,7 +32,7 @@
     <ul class="list-group list-group-flush">
       {% for a in activity %}
         <li class="list-group-item small">
-          {{ a.created_at }} –
+          {{ a.created_at.strftime('%d/%m/%Y %H:%M') }}
           <strong>{{ a.user_name }}</strong>
 
           {% if a.action == "creazione" %}
