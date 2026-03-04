@@ -33,7 +33,7 @@
         {% endif %}
 
         <div class="muted small mt-1">
-          {{ a.created_at }}
+          {{ a.created_at.strftime('%d/%m/%Y %H:%M') }}
         </div>
 
         {% if action.startswith("modifica") %}
