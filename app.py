@@ -7,6 +7,12 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
+def to_italy_time(dt):
+    if not dt:
+        return None
+    tz = pytz.timezone("Europe/Rome")
+    return dt.astimezone(tz)
+
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "change-me-please")
 
