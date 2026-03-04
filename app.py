@@ -6,6 +6,7 @@ from zoneinfo import ZoneInfo
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 import psycopg2
 from psycopg2.extras import RealDictCursor
+import urllib.parse
 
 def to_italy_time(dt):
     if not dt:
@@ -275,9 +276,13 @@ def view_resort(resort_id):
     resort = as_obj(r)
     have, total = calc_access_score(resort)
 
+    map_query = f"{resort.name} {(resort.city or '')} {(resort.region or '')}".strip()
+    map_url = "https://www.google.com/maps/search/?api=1&query=" + urllib.parse.quote_plus(map_query)
+
     return render_template("view.html", resort=resort,
                            features=FEATURES, have=have,
-                           total=total, activity=activity)
+                           total=total, activity=activity,
+                           map_url=map_url)
 
 @app.route("/edit/<int:resort_id>", methods=["GET","POST"])
 def edit_resort(resort_id):
