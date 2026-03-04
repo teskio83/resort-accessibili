@@ -223,7 +223,10 @@ def view_resort(resort_id):
                 (resort_id,)
             )
             activity = cur.fetchall()
-
+            
+            for a in activity:
+                a["created_at"] = to_italy_time(a["created_at"])
+                
     if not r:
         return redirect(url_for("index"))
 
@@ -335,6 +338,8 @@ def resort_history(resort_id):
                 ORDER BY created_at DESC
             """, (resort_id,))
             activities = cur.fetchall()
+            for a in activities:
+                a["created_at"] = to_italy_time(a["created_at"])
 
     return render_template(
         "activity.html",
