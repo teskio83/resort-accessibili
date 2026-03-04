@@ -103,7 +103,7 @@
             {% if resort.price_week %}
               <div class="mt-3 small">
                 <span class="muted">Prezzo sett.:</span>
-                <span class="fw-semibold">€ {{ resort.price_week }}</span>
+                <span class="fw-semibold">€ {{ "{:,.0f}".format(resort.price_week).replace(",", ".") }}</span>
                 {% if resort.price_period %}<span class="muted"> · {{ resort.price_period }}</span>{% endif %}
               </div>
             {% endif %}
@@ -136,3 +136,4 @@
 {% endif %}
 
 {% endblock %}
+
