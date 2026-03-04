@@ -17,6 +17,12 @@
     <a class="btn btn-outline-primary btn-sm btn-pill"
        href="{{ url_for('edit_resort', resort_id=resort.id) }}">Modifica</a>
 
+    <a class="btn btn-outline-success btn-sm btn-pill"
+       target="_blank"
+       href="https://www.google.com/maps/search/?api=1&query={{ resort.name }}">
+       📍 Maps
+    </a>
+
     <a class="btn btn-outline-dark btn-sm btn-pill"
        href="{{ url_for('resort_history', resort_id=resort.id) }}">
        📜 Storico completo
