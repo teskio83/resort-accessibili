@@ -5,6 +5,7 @@ from types import SimpleNamespace
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 import psycopg2
 from psycopg2.extras import RealDictCursor
+import pytz
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "change-me-please")
@@ -38,6 +39,12 @@ def get_conn():
     if not dsn:
         raise RuntimeError("DATABASE_URL non configurato")
     return psycopg2.connect(dsn, sslmode="require")
+
+def localtime(dt):
+    if not dt:
+        return None
+    tz = pytz.timezone("Europe/Rome")
+    return dt.astimezone(tz)
 
 def init_db():
     with get_conn() as conn:
