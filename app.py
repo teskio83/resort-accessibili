@@ -158,9 +158,38 @@ def index():
     if "user" not in session:
         return redirect(url_for("login"))
 
+    q = request.args.get("q", "").strip()
+    region = request.args.get("region", "")
+    status = request.args.get("status", "")
+    only_access = request.args.get("only_access")
+    keep = request.args.get("keep")
+
+    query = "SELECT * FROM resorts WHERE 1=1"
+    params = []
+
+    if q:
+        query += " AND (LOWER(name) LIKE %s OR LOWER(city) LIKE %s OR LOWER(notes) LIKE %s)"
+        params += [f"%{q.lower()}%", f"%{q.lower()}%", f"%{q.lower()}%"]
+
+    if region:
+        query += " AND region=%s"
+        params.append(region)
+
+    if status:
+        query += " AND status=%s"
+        params.append(status)
+
+    if only_access == "1":
+        query += " AND wheelchair_access = TRUE"
+
+    if keep == "1":
+        query += " AND keep_flag = TRUE"
+
+    query += " ORDER BY updated_at DESC NULLS LAST"
+
     with get_conn() as conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute("SELECT * FROM resorts ORDER BY updated_at DESC NULLS LAST")
+            cur.execute(query, params)
             rows = cur.fetchall()
 
     resorts = []
@@ -169,10 +198,22 @@ def index():
         have, total = calc_access_score(obj)
         resorts.append((obj, have, total))
 
-    return render_template("index.html", resorts=resorts,
-                           regions=REGIONS, status_choices=STATUS_CHOICES,
-                           filters={})
+    filters = {
+        "q": q,
+        "region": region,
+        "status": status,
+        "only_access": only_access,
+        "keep": keep
+    }
 
+    return render_template(
+        "index.html",
+        resorts=resorts,
+        regions=REGIONS,
+        status_choices=STATUS_CHOICES,
+        filters=filters
+    )
+    
 @app.route("/new", methods=["GET","POST"])
 def new_resort():
     if "user" not in session:
