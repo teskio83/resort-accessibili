@@ -186,7 +186,17 @@ def index():
     if keep == "1":
         query += " AND keep_flag = TRUE"
 
-    query += " ORDER BY updated_at DESC NULLS LAST"
+    query += """
+    ORDER BY
+      CASE
+        WHEN keep_flag = TRUE THEN 0
+        WHEN status = 'interessante' THEN 1
+        WHEN status = 'valutare' THEN 2
+        WHEN status = 'scartare' THEN 3
+        ELSE 4
+      END,
+      updated_at DESC NULLS LAST
+    """
 
     with get_conn() as conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
