@@ -51,16 +51,14 @@
           {{ a.created_at.strftime('%d/%m/%Y %H:%M') }}
           <strong>{{ a.user_name }}</strong>
 
-          {% if a.action == "creazione" %}
+          {% if "creazione" in a.action %}
             <span class="badge bg-success ms-2">Creazione</span>
-          {% elif a.action == "modifica" %}
+          {% elif "modifica" in a.action %}
             <span class="badge bg-primary ms-2">Modifica</span>
-          {% elif a.action == "eliminazione" %}
+          {% elif "eliminazione" in a.action %}
             <span class="badge bg-danger ms-2">Eliminazione</span>
           {% else %}
-            <span class="badge bg-secondary ms-2">
-            {{ a.action[:60] }}{% if a.action|length > 60 %}...{% endif %}
-            </span>
+            <span class="badge bg-secondary ms-2">Azione</span>
           {% endif %}
         </li>
       {% endfor %}
