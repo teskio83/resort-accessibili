@@ -118,8 +118,8 @@
     <div class="col-12"><hr class="my-2"></div>
 
     <div class="col-6">
-      <div class="muted small">Prezzo settimana</div>
-      <div>{% if resort.price_week %}€ {{ resort.price_week or "—" }}{% else %}—{% endif %}</div>
+      <div class="muted small">Prezzo soggiorno</div>
+      <div>{% if resort.price_week %}€ {{ "{:,.0f}".format(resort.price_week).replace(",", ".") }}{% else %}—{% endif %}</div>
     </div>
 
     <div class="col-6">
