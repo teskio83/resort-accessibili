@@ -148,6 +148,29 @@ def calc_access_score(resort):
     have = sum(1 for k,_ in FEATURES if getattr(resort, k))
     return have, total
 
+def get_unread_notifications(user):
+    with get_conn() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+
+            cur.execute("""
+                SELECT ra.*, r.name
+                FROM resort_activity ra
+                JOIN resorts r ON r.id = ra.resort_id
+                WHERE ra.id NOT IN (
+                    SELECT activity_id
+                    FROM notification_reads
+                    WHERE user_name = %s
+                )
+                ORDER BY ra.created_at DESC
+                LIMIT 10
+            """, (user,))
+
+            rows = cur.fetchall()
+
+            for r in rows:
+                r["created_at"] = to_italy_time(r["created_at"])
+
+            return rows
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
