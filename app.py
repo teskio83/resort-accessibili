@@ -369,12 +369,13 @@ def edit_resort(resort_id):
                 # Se ci sono modifiche reali, le salvo
                 if changes:
                     action_text = "modifica\n" + "\n".join(changes)
-
-                    cur.execute(
-                        "INSERT INTO resort_activity (resort_id, action, user_name, created_at) VALUES (%s,%s,%s,%s)",
-                        (resort_id, action_text, session["user"], datetime.utcnow())
-                    )
-
+                else:
+                    action_text = "modifica"
+                
+                cur.execute(
+                    "INSERT INTO resort_activity (resort_id, action, user_name, created_at) VALUES (%s,%s,%s,%s)",
+                    (resort_id, action_text, session["user"], datetime.utcnow())
+                )
         return redirect(url_for("view_resort", resort_id=resort_id))
 
     # GET
