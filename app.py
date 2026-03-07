@@ -437,12 +437,9 @@ def notifications():
     if "user" not in session:
         return redirect(url_for("login"))
 
-    user = session["user"]
-
     with get_conn() as conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
 
-            # recupero notifiche
             cur.execute("""
                 SELECT ra.*, r.name as resort_name
                 FROM resort_activity ra
@@ -455,26 +452,6 @@ def notifications():
 
             for a in activities:
                 a["created_at"] = to_italy_time(a["created_at"])
-
-            # recupero notifiche non lette
-            cur.execute("""
-                SELECT id
-                FROM resort_activity
-                WHERE id NOT IN (
-                    SELECT activity_id
-                    FROM notification_reads
-                    WHERE user_name = %s
-                )
-            """, (user,))
-
-            unread = cur.fetchall()
-
-            # segno come lette
-            for row in unread:
-                cur.execute("""
-                    INSERT INTO notification_reads (activity_id, user_name, read_at)
-                    VALUES (%s, %s, NOW())
-                """, (row["id"], user))
 
     return render_template(
         "notifications.html",
