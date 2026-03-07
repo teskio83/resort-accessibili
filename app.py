@@ -342,11 +342,11 @@ def edit_resort(resort_id):
                 # Campi che vogliamo tracciare
                 tracked_fields = [
                     "price_week",
+                    "price_period",
                     "status",
                     "keep_flag",
                     "notes"
                 ]
-
                 for field in tracked_fields:
                     old_val = old.get(field)
                     new_val = data.get(field)
