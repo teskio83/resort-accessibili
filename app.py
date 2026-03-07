@@ -455,6 +455,14 @@ def notifications():
             for a in activities:
                 a["created_at"] = to_italy_time(a["created_at"])
 
+            # 🔴 segna come lette
+            for a in activities:
+                cur.execute("""
+                    INSERT INTO notification_reads (activity_id, user_name, read_at)
+                    VALUES (%s, %s, NOW())
+                    ON CONFLICT DO NOTHING
+                """, (a["id"], user))
+
     return render_template(
         "notifications.html",
         activities=activities
