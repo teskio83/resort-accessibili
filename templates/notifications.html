@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Notifiche{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h5 class="mb-0">🔔 Notifiche</h5>
+  <a class="btn btn-outline-secondary btn-sm btn-pill"
+     href="{{ url_for('index') }}">
+     Torna alla lista
+  </a>
+</div>
+
+{% if activities %}
+
+  {% for a in activities %}
+
+  <div class="card card-resort p-3 mb-3">
+
+    <div class="small">
+
+      <div class="d-flex justify-content-between align-items-start">
+
+        <div>
+
+          <strong>{{ a.user_name }}</strong>
+
+          {% if "creazione" in a.action %}
+            ha creato
+          {% elif "modifica" in a.action %}
+            ha modificato
+          {% else %}
+            ha aggiornato
+          {% endif %}
+
+          <strong>{{ a.resort_name }}</strong>
+
+        </div>
+
+        <div class="muted small">
+          {{ a.created_at.strftime('%d/%m/%Y %H:%M') }}
+        </div>
+
+      </div>
+
+      {% if "modifica" in a.action %}
+      <div class="mt-2 small muted">
+        {{ a.action.replace('modifica','').replace('\n','<br>')|safe }}
+      </div>
+      {% endif %}
+
+      <div class="mt-3">
+        <a class="btn btn-outline-primary btn-sm btn-pill"
+           href="{{ url_for('view_resort', resort_id=a.resort_id) }}">
+           Apri resort
+        </a>
+      </div>
+
+    </div>
+
+  </div>
+
+  {% endfor %}
+
+{% else %}
+
+<div class="card card-resort p-4 text-center">
+  <div class="display-6">🔕</div>
+  <div class="h6 mt-2">Nessuna notifica</div>
+  <div class="muted">Non ci sono nuove attività.</div>
+</div>
+
+{% endif %}
+
+{% endblock %}
