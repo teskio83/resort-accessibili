@@ -460,13 +460,11 @@ def notifications():
                 cur.execute("""
                     INSERT INTO notification_reads (activity_id, user_name, read_at)
                     VALUES (%s, %s, NOW())
-                    ON CONFLICT DO NOTHING
                 """, (a["id"], user))
-
-    return render_template(
-        "notifications.html",
-        activities=activities
-    )
+                return render_template(
+                    "notifications.html",
+                    activities=activities
+                )
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
