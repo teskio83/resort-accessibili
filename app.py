@@ -156,15 +156,16 @@ def get_unread_notifications(user):
                 SELECT ra.*, r.name
                 FROM resort_activity ra
                 JOIN resorts r ON r.id = ra.resort_id
-                WHERE ra.id NOT IN (
+                WHERE ra.user_name != %s
+                AND ra.id NOT IN (
                     SELECT activity_id
                     FROM notification_reads
                     WHERE user_name = %s
                 )
                 ORDER BY ra.created_at DESC
                 LIMIT 10
-            """, (user,))
-
+            """, (user, user))
+            
             rows = cur.fetchall()
 
             for r in rows:
