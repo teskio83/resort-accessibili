@@ -459,12 +459,14 @@ def notifications():
             for a in activities:
                 cur.execute("""
                     INSERT INTO notification_reads (activity_id, user_name, read_at)
-                    VALUES (%s, %s, NOW())
-                """, (a["id"], user))
-                return render_template(
-                    "notifications.html",
-                    activities=activities
-                )
+                    SELECT id, %s, NOW()
+                    FROM resort_activity
+                    WHERE id NOT IN (
+                        SELECT activity_id
+                        FROM notification_reads
+                        WHERE user_name = %s
+                    )
+                """, (user, user))
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
