@@ -67,9 +67,23 @@
             <div class="muted">Sei loggato come</div>
             <div class="fw-semibold">{{ session.get("user") }}</div>
           </div>
-      
+                
           <a class="btn btn-outline-secondary btn-sm btn-pill" href="{{ url_for('index') }}">Home</a>
           <a class="btn btn-primary btn-sm btn-pill" href="{{ url_for('new_resort') }}">+ Nuovo</a>
+          
+          <a class="btn btn-outline-secondary btn-sm btn-pill position-relative"
+             href="{{ url_for('notifications') }}">
+          
+            🔔
+          
+            {% if notif_count and notif_count > 0 %}
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+              {{ notif_count }}
+            </span>
+            {% endif %}
+          
+          </a>
+          
           <a class="btn btn-outline-danger btn-sm btn-pill" href="{{ url_for('logout') }}">Logout</a>
       
         {% endif %}
