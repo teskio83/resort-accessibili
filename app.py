@@ -191,6 +191,9 @@ def index():
     if "user" not in session:
         return redirect(url_for("login"))
 
+    notifications = get_unread_notifications(session["user"])
+    notif_count = len(notifications)
+
     q = request.args.get("q", "").strip()
     region = request.args.get("region", "")
     status = request.args.get("status", "")
@@ -244,9 +247,10 @@ def index():
         resorts=resorts,
         regions=REGIONS,
         status_choices=STATUS_CHOICES,
-        filters=filters
+        filters=filters,
+        notif_count=notif_count
     )
-    
+        
 @app.route("/new", methods=["GET","POST"])
 def new_resort():
     if "user" not in session:
