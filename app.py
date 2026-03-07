@@ -431,6 +431,35 @@ def resort_history(resort_id):
         resort_id=resort_id
     )
 
+@app.route("/notifications")
+def notifications():
+
+    if "user" not in session:
+        return redirect(url_for("login"))
+
+    user = session["user"]
+
+    with get_conn() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+
+            cur.execute("""
+                SELECT ra.*, r.name as resort_name
+                FROM resort_activity ra
+                JOIN resorts r ON r.id = ra.resort_id
+                ORDER BY ra.created_at DESC
+                LIMIT 30
+            """)
+
+            activities = cur.fetchall()
+
+            for a in activities:
+                a["created_at"] = to_italy_time(a["created_at"])
+
+    return render_template(
+        "notifications.html",
+        activities=activities
+    )
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
