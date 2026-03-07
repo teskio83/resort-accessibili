@@ -94,6 +94,15 @@ def init_db():
             );
             """)
 
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS notification_reads (
+                id BIGSERIAL PRIMARY KEY,
+                activity_id BIGINT REFERENCES resort_activity(id) ON DELETE CASCADE,
+                user_name TEXT NOT NULL,
+                read_at TIMESTAMPTZ
+            );
+            """)
+
 try:
     init_db()
 except Exception as e:
