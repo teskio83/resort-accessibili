@@ -44,48 +44,66 @@ FEATURES = [
 
 def fetch_emails():
 
-    user = os.environ.get("GMAIL_USER")
-    password = os.environ.get("GMAIL_PASS")
+    try:
 
-    mail = imaplib.IMAP4_SSL("imap.gmail.com")
-    mail.login(user, password)
-    mail.select("inbox")
+        user = os.environ.get("GMAIL_USER")
+        password = os.environ.get("GMAIL_PASS")
 
-    status, messages = mail.search(None, "ALL")
-    email_ids = messages[0].split()[-20:]
+        if not user or not password:
+            return [{
+                "subject": "Configurazione Gmail mancante",
+                "from": "",
+                "date": "",
+                "body": "Configurare GMAIL_USER e GMAIL_PASS su Render"
+            }]
 
-    results = []
+        mail = imaplib.IMAP4_SSL("imap.gmail.com")
+        mail.login(user, password)
+        mail.select("inbox")
 
-    for eid in reversed(email_ids):
+        status, messages = mail.search(None, "ALL")
+        email_ids = messages[0].split()[-20:]
 
-        status, msg_data = mail.fetch(eid, "(RFC822)")
+        results = []
 
-        msg = email.message_from_bytes(msg_data[0][1])
+        for eid in reversed(email_ids):
 
-        subject = msg.get("subject")
-        sender = msg.get("from")
-        date = msg.get("date")
+            status, msg_data = mail.fetch(eid, "(RFC822)")
+            msg = email.message_from_bytes(msg_data[0][1])
 
-        body = ""
+            subject = msg.get("subject")
+            sender = msg.get("from")
+            date = msg.get("date")
 
-        if msg.is_multipart():
-            for part in msg.walk():
-                if part.get_content_type() == "text/plain":
-                    body = part.get_payload(decode=True).decode(errors="ignore")
-                    break
-        else:
-            body = msg.get_payload(decode=True).decode(errors="ignore")
+            body = ""
 
-        results.append({
-            "subject": subject,
-            "from": sender,
-            "date": date,
-            "body": body[:500]
-        })
+            if msg.is_multipart():
+                for part in msg.walk():
+                    if part.get_content_type() == "text/plain":
+                        body = part.get_payload(decode=True).decode(errors="ignore")
+                        break
+            else:
+                body = msg.get_payload(decode=True).decode(errors="ignore")
 
-    mail.logout()
+            results.append({
+                "subject": subject,
+                "from": sender,
+                "date": date,
+                "body": body[:500]
+            })
 
-    return results
+        mail.logout()
+
+        return results
+
+    except Exception as e:
+
+        return [{
+            "subject": "Errore lettura email",
+            "from": "",
+            "date": "",
+            "body": str(e)
+        }]
     
 def get_conn():
     dsn = os.environ.get("DATABASE_URL")
