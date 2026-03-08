@@ -646,13 +646,22 @@ def emails():
 
     with get_conn() as conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
+
+            # lista resort
             cur.execute("SELECT id, name FROM resorts ORDER BY name")
             resorts = cur.fetchall()
+
+            # email già collegate
+            cur.execute("SELECT email_key FROM resort_messages")
+            rows = cur.fetchall()
+
+            linked = {r["email_key"] for r in rows if r["email_key"]}
 
     return render_template(
         "emails.html",
         emails=emails,
-        resorts=resorts
+        resorts=resorts,
+        linked=linked
     )
     
 if __name__ == "__main__":
