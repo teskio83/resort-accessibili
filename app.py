@@ -659,12 +659,20 @@ def emails():
 
             # email già collegate
             try:
-                cur.execute("SELECT email_key FROM resort_messages")
+
+                cur.execute("""
+                SELECT rm.email_key, r.name
+                FROM resort_messages rm
+                JOIN resorts r ON r.id = rm.resort_id
+                """)
+
                 rows = cur.fetchall()
-                linked = {r["email_key"] for r in rows if r["email_key"]}
+
+                linked = {r["email_key"]: r["name"] for r in rows if r["email_key"]}
+
             except:
-                # se la colonna non esiste ancora
-                linked = set()
+
+                linked = {}
 
     return render_template(
         "emails.html",
