@@ -76,13 +76,22 @@ def fetch_emails():
             date = msg.get("date")
 
             body = ""
-
+            
             if msg.is_multipart():
+            
                 for part in msg.walk():
-                    if part.get_content_type() == "text/plain":
+            
+                    content_type = part.get_content_type()
+            
+                    if content_type == "text/plain":
                         body = part.get_payload(decode=True).decode(errors="ignore")
                         break
+            
+                    if content_type == "text/html":
+                        body = part.get_payload(decode=True).decode(errors="ignore")
+            
             else:
+            
                 body = msg.get_payload(decode=True).decode(errors="ignore")
 
             results.append({
