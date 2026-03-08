@@ -611,9 +611,15 @@ def emails():
 
     emails = fetch_emails()
 
+    with get_conn() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("SELECT id, name FROM resorts ORDER BY name")
+            resorts = cur.fetchall()
+
     return render_template(
         "emails.html",
-        emails=emails
+        emails=emails,
+        resorts=resorts
     )
     
 if __name__ == "__main__":
