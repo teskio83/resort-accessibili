@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Email{% endblock %}
+
+{% block content %}
+
+<div class="mb-3">
+  <h5>{{ message.subject }}</h5>
+
+  <div class="muted small">
+    collegata al resort <strong>{{ message.resort_name }}</strong>
+  </div>
+
+  <div class="muted small">
+    {{ message.created_at.strftime('%d/%m/%Y %H:%M') }}
+  </div>
+</div>
+
+<div class="card card-resort p-3">
+
+  <pre style="white-space:pre-wrap;font-family:inherit">
+{{ message.body }}
+  </pre>
+
+</div>
+
+<a class="btn btn-outline-secondary btn-sm btn-pill mt-3"
+   href="{{ url_for('view_resort', resort_id=message.resort_id) }}">
+   Torna al resort
+</a>
+
+{% endblock %}
