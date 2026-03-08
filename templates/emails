@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Email ricevute{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h5 class="mb-0">📬 Email ricevute</h5>
+
+  <a class="btn btn-outline-secondary btn-sm btn-pill"
+     href="{{ url_for('index') }}">
+     Torna alla lista
+  </a>
+</div>
+
+{% if emails %}
+
+  {% for e in emails %}
+
+  <div class="card card-resort p-3 mb-3">
+
+    <div class="small">
+
+      <div class="d-flex justify-content-between align-items-start">
+
+        <div>
+          <strong>{{ e.subject or "Senza oggetto" }}</strong>
+          <div class="muted">
+            da {{ e.from }}
+          </div>
+        </div>
+
+        <div class="muted small">
+          {{ e.date }}
+        </div>
+
+      </div>
+
+      {% if e.body %}
+      <div class="mt-2 small muted">
+        {{ e.body }}
+      </div>
+      {% endif %}
+
+    </div>
+
+  </div>
+
+  {% endfor %}
+
+{% else %}
+
+<div class="card card-resort p-4 text-center">
+
+  <div class="display-6">📭</div>
+
+  <div class="h6 mt-2">
+    Nessuna email trovata
+  </div>
+
+  <div class="muted">
+    Non ci sono email nella casella Gmail configurata.
+  </div>
+
+</div>
+
+{% endif %}
+
+{% endblock %}
