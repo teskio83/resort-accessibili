@@ -527,6 +527,36 @@ def add_message():
             ))
 
     return redirect(url_for("view_resort", resort_id=resort_id))
+
+@app.route("/delete_message/<int:message_id>", methods=["POST"])
+def delete_message(message_id):
+
+    if "user" not in session:
+        return redirect(url_for("login"))
+
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+
+            cur.execute("""
+                SELECT resort_id
+                FROM resort_messages
+                WHERE id=%s
+            """, (message_id,))
+
+            r = cur.fetchone()
+
+            if not r:
+                return redirect(url_for("index"))
+
+            resort_id = r[0]
+
+            cur.execute("""
+                DELETE FROM resort_messages
+                WHERE id=%s
+            """, (message_id,))
+
+    return redirect(url_for("view_resort", resort_id=resort_id))
+    
     
 @app.route("/delete/<int:resort_id>", methods=["POST"])
 def delete_resort(resort_id):
