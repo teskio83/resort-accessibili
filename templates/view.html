@@ -40,7 +40,7 @@
 
 </div>
 
-<!-- 🕘 STORICO ATTIVITÀ IN ALTO -->
+<!-- 🕘 STORICO ATTIVITÀ -->
 <div class="card card-resort p-3 mb-3">
   <div class="fw-semibold mb-2">🕘 Storico attività</div>
 
@@ -74,8 +74,10 @@
     <div class="fw-semibold">Accessibilità</div>
     <div class="fw-semibold">{{ have }}/{{ total }}</div>
   </div>
+
   <div class="progress mt-2">
-    <div class="progress-bar" role="progressbar"
+    <div class="progress-bar"
+         role="progressbar"
          style="width: {{ (have*100/total)|round(0) if total else 0 }}%">
     </div>
   </div>
@@ -96,10 +98,11 @@
 <!-- DETTAGLI -->
 <div class="card card-resort p-3 mb-3">
   <div class="row g-2">
+
     <div class="col-12 col-md-6">
       <div class="muted small">Sito</div>
       {% if resort.website %}
-        <a href="{{ resort.website }}" target="_blank" rel="noopener">{{ resort.website or "—" }}</a>
+        <a href="{{ resort.website }}" target="_blank">{{ resort.website }}</a>
       {% else %}
         <div class="text-secondary">—</div>
       {% endif %}
@@ -119,7 +122,13 @@
 
     <div class="col-6">
       <div class="muted small">Prezzo soggiorno</div>
-      <div>{% if resort.price_week %}€ {{ "{:,.0f}".format(resort.price_week).replace(",", ".") }}{% else %}—{% endif %}</div>
+      <div>
+        {% if resort.price_week %}
+        € {{ "{:,.0f}".format(resort.price_week).replace(",", ".") }}
+        {% else %}
+        —
+        {% endif %}
+      </div>
     </div>
 
     <div class="col-6">
@@ -142,8 +151,9 @@
   </div>
 </div>
 
-<!-- 📩 MESSAGGI -->
+<!-- 📩 EMAIL / MESSAGGI -->
 <div class="card card-resort p-3 mb-3">
+
   <div class="fw-semibold mb-2">📩 Messaggi</div>
 
   {% if messages %}
@@ -168,21 +178,29 @@
         </div>
 
         {% if m.body %}
-        <div class="mt-1">
-          {{ m.body | e }}
+        <div class="mt-1 text-secondary">
+          {{ m.body[:200] }}...
         </div>
         {% endif %}
 
-        <form method="post"
-              action="{{ url_for('delete_message', message_id=m.id) }}"
-              class="mt-2"
-              onsubmit="return confirm('Rimuovere questo messaggio?');">
-        
-        <button class="btn btn-outline-danger btn-sm btn-pill">
-        Rimuovi
-        </button>
-        
-        </form>
+        <div class="mt-2 d-flex gap-2">
+
+          <a class="btn btn-outline-dark btn-sm btn-pill"
+             href="{{ url_for('view_message', message_id=m.id) }}">
+             Apri email
+          </a>
+
+          <form method="post"
+                action="{{ url_for('delete_message', message_id=m.id) }}"
+                onsubmit="return confirm('Scollegare questa email?');">
+
+            <button class="btn btn-outline-danger btn-sm btn-pill">
+              Scollega
+            </button>
+
+          </form>
+
+        </div>
 
       </div>
 
@@ -200,42 +218,16 @@
 
   {% endif %}
 
-  <hr class="my-3">
-
-<form class="mt-2"
-      method="post"
-      action="{{ url_for('add_message', resort_id=resort.id) }}">
-  
-  <div class="mb-2 small fw-semibold">
-    + Nuovo messaggio
-  </div>
-
-  <input
-      type="text"
-      name="subject"
-      class="form-control form-control-sm mb-2"
-      placeholder="Oggetto (es. Preventivo ricevuto)"
-  >
-
-  <textarea
-      name="body"
-      class="form-control form-control-sm mb-2"
-      rows="2"
-      placeholder="Scrivi il messaggio..."
-  ></textarea>
-
-  <button class="btn btn-primary btn-sm btn-pill">
-      Salva messaggio
-  </button>
-
-</form>
-
 </div>
 
 <form method="post"
       action="{{ url_for('delete_resort', resort_id=resort.id) }}"
       onsubmit="return confirm('Eliminare questo resort?');">
-  <button class="btn btn-outline-danger btn-pill">Elimina</button>
+
+  <button class="btn btn-outline-danger btn-pill">
+    Elimina
+  </button>
+
 </form>
 
 {% endblock %}
