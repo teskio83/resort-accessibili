@@ -142,6 +142,55 @@
   </div>
 </div>
 
+<!-- 📩 MESSAGGI -->
+<div class="card card-resort p-3 mb-3">
+  <div class="fw-semibold mb-2">📩 Messaggi</div>
+
+  {% if messages %}
+
+    {% for m in messages %}
+
+      <div class="mb-3 small">
+
+        <div class="d-flex justify-content-between">
+
+          <div>
+            <strong>{{ m.user_name }}</strong>
+            {% if m.subject %}
+              – {{ m.subject }}
+            {% endif %}
+          </div>
+
+          <div class="muted">
+            {{ m.created_at.strftime('%d/%m/%Y %H:%M') }}
+          </div>
+
+        </div>
+
+        {% if m.body %}
+        <div class="mt-1">
+          {{ m.body }}
+        </div>
+        {% endif %}
+
+      </div>
+
+      {% if not loop.last %}
+      <hr class="my-2">
+      {% endif %}
+
+    {% endfor %}
+
+  {% else %}
+
+    <div class="small text-secondary">
+      Nessun messaggio collegato a questo resort
+    </div>
+
+  {% endif %}
+
+</div>
+
 <form method="post"
       action="{{ url_for('delete_resort', resort_id=resort.id) }}"
       onsubmit="return confirm('Eliminare questo resort?');">
