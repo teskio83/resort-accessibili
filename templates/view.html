@@ -189,6 +189,35 @@
 
   {% endif %}
 
+  <hr class="my-3">
+
+<form method="post"
+      action="{{ url_for('add_message', resort_id=resort.id) }}">
+
+  <div class="mb-2 small fw-semibold">
+    + Nuovo messaggio
+  </div>
+
+  <input
+      type="text"
+      name="subject"
+      class="form-control form-control-sm mb-2"
+      placeholder="Oggetto (es. Preventivo ricevuto)"
+  >
+
+  <textarea
+      name="body"
+      class="form-control form-control-sm mb-2"
+      rows="2"
+      placeholder="Scrivi il messaggio..."
+  ></textarea>
+
+  <button class="btn btn-primary btn-sm btn-pill">
+      Salva messaggio
+  </button>
+
+</form>
+
 </div>
 
 <form method="post"
