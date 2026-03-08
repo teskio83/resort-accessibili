@@ -584,6 +584,20 @@ def notifications():
         "notifications.html",
         activities=activities
     )
+
+@app.route("/emails")
+def emails():
+
+    if "user" not in session:
+        return redirect(url_for("login"))
+
+    emails = fetch_emails()
+
+    return render_template(
+        "emails.html",
+        emails=emails
+    )
+    
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
