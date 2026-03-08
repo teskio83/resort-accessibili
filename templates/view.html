@@ -173,6 +173,17 @@
         </div>
         {% endif %}
 
+        <form method="post"
+              action="{{ url_for('delete_message', message_id=m.id) }}"
+              class="mt-2"
+              onsubmit="return confirm('Rimuovere questo messaggio?');">
+        
+        <button class="btn btn-outline-danger btn-sm btn-pill">
+        Rimuovi
+        </button>
+        
+        </form>
+
       </div>
 
       {% if not loop.last %}
