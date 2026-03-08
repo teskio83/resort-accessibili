@@ -658,10 +658,13 @@ def emails():
             resorts = cur.fetchall()
 
             # email già collegate
-            cur.execute("SELECT email_key FROM resort_messages")
-            rows = cur.fetchall()
-
-            linked = {r["email_key"] for r in rows if r["email_key"]}
+            try:
+                cur.execute("SELECT email_key FROM resort_messages")
+                rows = cur.fetchall()
+                linked = {r["email_key"] for r in rows if r["email_key"]}
+            except:
+                # se la colonna non esiste ancora
+                linked = set()
 
     return render_template(
         "emails.html",
