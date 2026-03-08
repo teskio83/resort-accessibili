@@ -167,7 +167,7 @@ def init_db():
                 read_at TIMESTAMPTZ
             );
             """)
-
+            
             cur.execute("""
             CREATE TABLE IF NOT EXISTS resort_messages (
                 id BIGSERIAL PRIMARY KEY,
@@ -175,6 +175,7 @@ def init_db():
                 user_name TEXT NOT NULL,
                 subject TEXT,
                 body TEXT,
+                email_key TEXT,
                 created_at TIMESTAMPTZ
             );
             """)
