@@ -529,15 +529,18 @@ def add_message():
     with get_conn() as conn:
         with conn.cursor() as cur:
 
+            email_key = (subject + "|" + body[:50]).lower()
+            
             cur.execute("""
                 INSERT INTO resort_messages
-                (resort_id, user_name, subject, body, created_at)
-                VALUES (%s,%s,%s,%s,NOW())
+                (resort_id, user_name, subject, body, email_key, created_at)
+                VALUES (%s,%s,%s,%s,%s,NOW())
             """, (
                 resort_id,
                 session["user"],
                 subject,
-                body
+                body,
+                email_key
             ))
 
             cur.execute("""
