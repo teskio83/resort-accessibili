@@ -1,4 +1,6 @@
 import os
+import imaplib
+import email
 from datetime import datetime
 from types import SimpleNamespace
 from zoneinfo import ZoneInfo
@@ -40,6 +42,51 @@ FEATURES = [
     ("staff_assistance", "Assistenza inclusiva"),
 ]
 
+def fetch_emails():
+
+    user = os.environ.get("GMAIL_USER")
+    password = os.environ.get("GMAIL_PASS")
+
+    mail = imaplib.IMAP4_SSL("imap.gmail.com")
+    mail.login(user, password)
+    mail.select("inbox")
+
+    status, messages = mail.search(None, "ALL")
+    email_ids = messages[0].split()[-20:]
+
+    results = []
+
+    for eid in reversed(email_ids):
+
+        status, msg_data = mail.fetch(eid, "(RFC822)")
+
+        msg = email.message_from_bytes(msg_data[0][1])
+
+        subject = msg.get("subject")
+        sender = msg.get("from")
+        date = msg.get("date")
+
+        body = ""
+
+        if msg.is_multipart():
+            for part in msg.walk():
+                if part.get_content_type() == "text/plain":
+                    body = part.get_payload(decode=True).decode(errors="ignore")
+                    break
+        else:
+            body = msg.get_payload(decode=True).decode(errors="ignore")
+
+        results.append({
+            "subject": subject,
+            "from": sender,
+            "date": date,
+            "body": body[:500]
+        })
+
+    mail.logout()
+
+    return results
+    
 def get_conn():
     dsn = os.environ.get("DATABASE_URL")
     if not dsn:
