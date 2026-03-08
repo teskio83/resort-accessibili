@@ -150,6 +150,17 @@ def init_db():
             );
             """)
 
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS resort_messages (
+                id BIGSERIAL PRIMARY KEY,
+                resort_id BIGINT REFERENCES resorts(id) ON DELETE CASCADE,
+                user_name TEXT NOT NULL,
+                subject TEXT,
+                body TEXT,
+                created_at TIMESTAMPTZ
+            );
+            """)
+
 try:
     init_db()
 except Exception as e:
@@ -568,17 +579,6 @@ def notifications():
                     VALUES (%s,%s,NOW())
                     ON CONFLICT DO NOTHING
                 """, (a["id"], user))
-
-                cur.execute("""
-                CREATE TABLE IF NOT EXISTS resort_messages (
-                    id BIGSERIAL PRIMARY KEY,
-                    resort_id BIGINT REFERENCES resorts(id) ON DELETE CASCADE,
-                    user_name TEXT NOT NULL,
-                    subject TEXT,
-                    body TEXT,
-                    created_at TIMESTAMPTZ
-                );
-                """)
 
     return render_template(
         "notifications.html",
