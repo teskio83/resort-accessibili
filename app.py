@@ -103,11 +103,14 @@ def fetch_emails():
             body = body.replace('\n\n\n', '\n\n')
             body = body.strip()
     
+            email_key = (str(subject) + "|" + body[:80]).lower()
+            
             results.append({
                 "subject": subject,
                 "from": sender,
                 "date": date,
-                "body": body[:500]
+                "body": body[:500],
+                "email_key": email_key
             })
 
         mail.logout()
@@ -526,11 +529,12 @@ def add_message():
     if not resort_id:
         return redirect(url_for("emails"))
 
+    # 🔑 chiave email
+    email_key = (subject + "|" + body[:80]).lower()
+
     with get_conn() as conn:
         with conn.cursor() as cur:
 
-            email_key = (subject + "|" + body[:50]).lower()
-            
             cur.execute("""
                 INSERT INTO resort_messages
                 (resort_id, user_name, subject, body, email_key, created_at)
@@ -554,7 +558,7 @@ def add_message():
             ))
 
     return redirect(url_for("view_resort", resort_id=resort_id))
-
+    
 @app.route("/delete_message/<int:message_id>", methods=["POST"])
 def delete_message(message_id):
 
