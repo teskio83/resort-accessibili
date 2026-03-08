@@ -41,6 +41,31 @@
       </div>
       {% endif %}
 
+      <div class="mt-3">
+      
+      <form method="post" action="{{ url_for('add_message') }}">
+      
+      <select name="resort_id" class="form-select form-select-sm mb-2">
+      
+      <option value="">Collega al resort...</option>
+      
+      {% for r in resorts %}
+      <option value="{{ r.id }}">{{ r.name }}</option>
+      {% endfor %}
+      
+      </select>
+      
+      <input type="hidden" name="subject" value="{{ e.subject }}">
+      <input type="hidden" name="body" value="{{ e.body }}">
+      
+      <button class="btn btn-outline-primary btn-sm btn-pill">
+      Collega email
+      </button>
+      
+      </form>
+      
+      </div>
+
     </div>
 
   </div>
