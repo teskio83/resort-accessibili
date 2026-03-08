@@ -295,32 +295,52 @@ def view_resort(resort_id):
 
     with get_conn() as conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
+
             cur.execute("SELECT * FROM resorts WHERE id=%s", (resort_id,))
             r = cur.fetchone()
 
+            # storico attività
             cur.execute(
                 "SELECT * FROM resort_activity WHERE resort_id=%s ORDER BY created_at DESC LIMIT 3",
                 (resort_id,)
             )
             activity = cur.fetchall()
-            
+
             for a in activity:
                 a["created_at"] = to_italy_time(a["created_at"])
-                
+
+            # 📩 messaggi collegati al resort
+            cur.execute("""
+                SELECT *
+                FROM resort_messages
+                WHERE resort_id=%s
+                ORDER BY created_at DESC
+            """, (resort_id,))
+
+            messages = cur.fetchall()
+
+            for m in messages:
+                m["created_at"] = to_italy_time(m["created_at"])
+
     if not r:
         return redirect(url_for("index"))
 
     resort = as_obj(r)
     have, total = calc_access_score(resort)
-    
+
     map_query = f"{resort.name} {(resort.city or '')} {(resort.region or '')}".strip()
     map_url = "https://www.google.com/maps/search/?api=1&query=" + urllib.parse.quote_plus(map_query)
 
-    return render_template("view.html", resort=resort,
-                           features=FEATURES, have=have,
-                           total=total, activity=activity,
-                           map_url=map_url)
-
+    return render_template(
+        "view.html",
+        resort=resort,
+        features=FEATURES,
+        have=have,
+        total=total,
+        activity=activity,
+        messages=messages,
+        map_url=map_url
+    )
 @app.route("/edit/<int:resort_id>", methods=["GET","POST"])
 def edit_resort(resort_id):
     if "user" not in session:
@@ -464,6 +484,17 @@ def notifications():
                     VALUES (%s,%s,NOW())
                     ON CONFLICT DO NOTHING
                 """, (a["id"], user))
+
+                cur.execute("""
+                CREATE TABLE IF NOT EXISTS resort_messages (
+                    id BIGSERIAL PRIMARY KEY,
+                    resort_id BIGINT REFERENCES resorts(id) ON DELETE CASCADE,
+                    user_name TEXT NOT NULL,
+                    subject TEXT,
+                    body TEXT,
+                    created_at TIMESTAMPTZ
+                );
+                """)
 
     return render_template(
         "notifications.html",
