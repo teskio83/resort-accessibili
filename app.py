@@ -179,6 +179,11 @@ def init_db():
                 created_at TIMESTAMPTZ
             );
             """)
+            
+            cur.execute("""
+            ALTER TABLE resort_messages
+            ADD COLUMN IF NOT EXISTS email_key TEXT;
+            """)
 
 try:
     init_db()
