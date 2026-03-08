@@ -1,6 +1,7 @@
 import os
 import imaplib
 import email
+import re
 from datetime import datetime
 from types import SimpleNamespace
 from zoneinfo import ZoneInfo
@@ -79,6 +80,8 @@ def fetch_emails():
             
             if msg.is_multipart():
             
+                html_body = ""
+            
                 for part in msg.walk():
             
                     content_type = part.get_content_type()
@@ -88,12 +91,18 @@ def fetch_emails():
                         break
             
                     if content_type == "text/html":
-                        body = part.get_payload(decode=True).decode(errors="ignore")
+                        html_body = part.get_payload(decode=True).decode(errors="ignore")
+            
+                if not body and html_body:
+                    body = html_body
             
             else:
-            
                 body = msg.get_payload(decode=True).decode(errors="ignore")
 
+            body = re.sub('<[^<]+?>', '', body)
+            body = body.replace('\n\n\n', '\n\n')
+            body = body.strip()
+    
             results.append({
                 "subject": subject,
                 "from": sender,
