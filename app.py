@@ -672,7 +672,32 @@ def emails():
         resorts=resorts,
         linked=linked
     )
-    
+
+@app.route("/message/<int:message_id>")
+def view_message(message_id):
+
+    if "user" not in session:
+        return redirect(url_for("login"))
+
+    with get_conn() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+
+            cur.execute("""
+                SELECT rm.*, r.name as resort_name
+                FROM resort_messages rm
+                JOIN resorts r ON r.id = rm.resort_id
+                WHERE rm.id=%s
+            """, (message_id,))
+
+            msg = cur.fetchone()
+
+    if not msg:
+        return redirect(url_for("index"))
+
+    msg["created_at"] = to_italy_time(msg["created_at"])
+
+    return render_template("message.html", message=msg)
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
