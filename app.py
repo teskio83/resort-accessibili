@@ -341,6 +341,7 @@ def view_resort(resort_id):
         messages=messages,
         map_url=map_url
     )
+    
 @app.route("/edit/<int:resort_id>", methods=["GET","POST"])
 def edit_resort(resort_id):
     if "user" not in session:
@@ -411,6 +412,42 @@ def edit_resort(resort_id):
                            status_choices=STATUS_CHOICES,
                            features=FEATURES,
                            resort=as_obj(r))
+
+@app.route("/resort/<int:resort_id>/add_message", methods=["POST"])
+def add_message(resort_id):
+
+    if "user" not in session:
+        return redirect(url_for("login"))
+
+    subject = (request.form.get("subject") or "").strip()
+    body = (request.form.get("body") or "").strip()
+
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+
+            cur.execute("""
+                INSERT INTO resort_messages
+                (resort_id, user_name, subject, body, created_at)
+                VALUES (%s,%s,%s,%s,NOW())
+            """, (
+                resort_id,
+                session["user"],
+                subject,
+                body
+            ))
+
+            # registriamo anche nello storico attività
+            cur.execute("""
+                INSERT INTO resort_activity
+                (resort_id, action, user_name, created_at)
+                VALUES (%s,%s,%s,NOW())
+            """, (
+                resort_id,
+                "messaggio",
+                session["user"]
+            ))
+
+    return redirect(url_for("view_resort", resort_id=resort_id))
 
 @app.route("/delete/<int:resort_id>", methods=["POST"])
 def delete_resort(resort_id):
