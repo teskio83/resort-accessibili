@@ -102,20 +102,31 @@ def fetch_emails():
             import html
             
             body = re.sub('<[^<]+?>', '', body)
-            
-            # decodifica HTML tipo &lt; &gt;
             body = html.unescape(body)
             
-            # sistema gli spazi
             body = body.replace('\r', '\n')
             body = re.sub(r'\n{3,}', '\n\n', body)
             
-            # aggiunge a capo dopo intestazioni email
-            body = body.replace("Da:", "\nDa:")
-            body = body.replace("Data:", "\nData:")
-            body = body.replace("Oggetto:", "\nOggetto:")
+            # elimina intestazioni forward inutili
+            markers = [
+                "Inizio messaggio inoltrato",
+                "---------- Forwarded message ----------"
+            ]
             
-            body = body.strip()
+            for m in markers:
+                if m in body:
+                    body = body.split(m,1)[-1]
+            
+            # elimina intestazioni tipo Da/Data/Oggetto
+            lines = body.split("\n")
+            clean_lines = []
+            
+            for l in lines:
+                if l.strip().startswith(("Da:", "Data:", "Oggetto:", "A:")):
+                    continue
+                clean_lines.append(l)
+            
+            body = "\n".join(clean_lines).strip()
                             
             results.append({
                 "subject": subject,
