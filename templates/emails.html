@@ -16,61 +16,77 @@
 
   {% for e in emails %}
 
-  {% set subject = e.subject or "" %}
-  {% set body = e.body or "" %}
-  {% set key = (subject ~ "|" ~ body[:80])|lower %}
+  {% set key = (e.subject ~ '|' ~ e.body[:80])|lower %}
 
   <div class="card card-resort p-3 mb-3">
+
     <div class="small">
 
       <div class="d-flex justify-content-between align-items-start">
+
         <div>
-          <strong>{{ subject if subject else "Senza oggetto" }}</strong>
+          <strong>{{ e.subject or "Senza oggetto" }}</strong>
 
           <div class="muted">
-            da {{ e.from or "—" }}
+            da {{ e.from }}
           </div>
+
+          <a class="btn btn-outline-dark btn-sm btn-pill mt-2"
+             target="_blank"
+             href="https://mail.google.com/mail/u/0/#search/{{ e.subject | urlencode }}">
+             Apri in Gmail
+          </a>
+
         </div>
 
         <div class="muted small">
-          {{ e.date or "" }}
+          {{ e.date }}
         </div>
-      </div>
 
-      {% if body %}
+      </div>
+      
+      {% if e.body %}
       <div class="mt-2 small muted" style="white-space: pre-line;">
-        {{ body[:300] }}{% if body|length > 300 %}...{% endif %}
+        {{ e.body[:300] }}{% if e.body|length > 300 %}...{% endif %}
       </div>
       {% endif %}
 
       <div class="mt-3">
 
-        {% if key in linked %}
-          <span class="badge bg-success">Email già collegata</span>
-          <span class="badge bg-light text-dark">{{ linked[key] }}</span>
-        {% else %}
+      {% if key in linked %}
 
-          <form method="post" action="{{ url_for('add_message') }}">
-            <select name="resort_id" class="form-select form-select-sm mb-2">
-              <option value="">Collega al resort...</option>
-              {% for r in resorts %}
-                <option value="{{ r.id }}">{{ r.name }}</option>
-              {% endfor %}
-            </select>
+        <span class="badge bg-success">Email già collegata</span>
 
-            <input type="hidden" name="subject" value="{{ subject }}">
-            <input type="hidden" name="body" value="{{ body }}">
+      {% else %}
 
-            <button class="btn btn-outline-primary btn-sm btn-pill">
-              Collega email
-            </button>
-          </form>
+        <form method="post" action="{{ url_for('add_message') }}">
 
-        {% endif %}
+          <select name="resort_id" class="form-select form-select-sm mb-2">
+
+            <option value="">Collega al resort...</option>
+
+            {% for r in resorts %}
+            <option value="{{ r.id }}">{{ r.name }}</option>
+            {% endfor %}
+
+          </select>
+
+          <input type="hidden" name="subject" value="{{ e.subject }}">
+          <input type="hidden" name="body" value="{{ e.body }}">
+          <input type="hidden" name="email_key" value="{{ key }}">
+
+          <button class="btn btn-outline-primary btn-sm btn-pill">
+            Collega email
+          </button>
+
+        </form>
+
+      {% endif %}
 
       </div>
 
     </div>
+
   </div>
 
   {% endfor %}
@@ -78,9 +94,17 @@
 {% else %}
 
 <div class="card card-resort p-4 text-center">
+
   <div class="display-6">📭</div>
-  <div class="h6 mt-2">Nessuna email trovata</div>
-  <div class="muted">Non ci sono email nella casella Gmail configurata.</div>
+
+  <div class="h6 mt-2">
+    Nessuna email trovata
+  </div>
+
+  <div class="muted">
+    Non ci sono email nella casella Gmail configurata.
+  </div>
+
 </div>
 
 {% endif %}
