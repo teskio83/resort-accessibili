@@ -105,6 +105,18 @@ def fetch_emails():
             body = html.unescape(body)   # 👈 decodifica &lt; &gt; ecc
             body = body.replace('\n\n\n', '\n\n')
             body = body.strip()
+            
+            # taglia forward inutili
+            split_markers = [
+                "Inizio messaggio inoltrato",
+                "---------- Forwarded message ----------",
+                "Da:",
+                "From:"
+            ]
+            
+            for marker in split_markers:
+                if marker in body:
+                    body = body.split(marker)[0].strip()
     
             email_key = (str(subject) + "|" + body[:80]).lower()
             
