@@ -116,9 +116,7 @@ def fetch_emails():
             body = body.replace("Oggetto:", "\nOggetto:")
             
             body = body.strip()
-                
-            email_key = (str(subject) + "|" + body[:80]).lower()
-            
+                            
             results.append({
                 "subject": subject,
                 "from": sender,
