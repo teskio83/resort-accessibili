@@ -102,22 +102,21 @@ def fetch_emails():
             import html
             
             body = re.sub('<[^<]+?>', '', body)
-            body = html.unescape(body)   # 👈 decodifica &lt; &gt; ecc
-            body = body.replace('\n\n\n', '\n\n')
+            
+            # decodifica HTML tipo &lt; &gt;
+            body = html.unescape(body)
+            
+            # sistema gli spazi
+            body = body.replace('\r', '\n')
+            body = re.sub(r'\n{3,}', '\n\n', body)
+            
+            # aggiunge a capo dopo intestazioni email
+            body = body.replace("Da:", "\nDa:")
+            body = body.replace("Data:", "\nData:")
+            body = body.replace("Oggetto:", "\nOggetto:")
+            
             body = body.strip()
-            
-            # taglia forward inutili
-            split_markers = [
-                "Inizio messaggio inoltrato",
-                "---------- Forwarded message ----------",
-                "Da:",
-                "From:"
-            ]
-            
-            for marker in split_markers:
-                if marker in body:
-                    body = body.split(marker)[0].strip()
-    
+                
             email_key = (str(subject) + "|" + body[:80]).lower()
             
             results.append({
