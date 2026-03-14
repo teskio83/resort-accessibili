@@ -44,10 +44,10 @@
         </div>
 
       </div>
-
+      
       {% if e.body %}
       <div class="mt-2 small muted">
-        {{ e.body }}
+        {{ e.body[:300] }}{% if e.body|length > 300 %}...{% endif %}
       </div>
       {% endif %}
 
