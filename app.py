@@ -98,8 +98,11 @@ def fetch_emails():
             
             else:
                 body = msg.get_payload(decode=True).decode(errors="ignore")
-
+            
+            import html
+            
             body = re.sub('<[^<]+?>', '', body)
+            body = html.unescape(body)   # 👈 decodifica &lt; &gt; ecc
             body = body.replace('\n\n\n', '\n\n')
             body = body.strip()
     
