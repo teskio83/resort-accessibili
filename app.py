@@ -123,7 +123,7 @@ def fetch_emails():
                 "subject": subject,
                 "from": sender,
                 "date": date,
-                "body": body[:500],
+                "body": body,
                 "email_key": email_key
             })
 
