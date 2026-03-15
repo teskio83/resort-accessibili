@@ -138,8 +138,8 @@ def fetch_emails():
             
             body = "\n".join(clean_lines).strip()
 
-            email_key = (str(subject) + "|" + body[:80]).lower()
-                            
+            email_key = str(subject).strip().lower()
+
             results.append({
                 "subject": subject,
                 "from": sender,
