@@ -126,7 +126,9 @@ def fetch_emails():
             
             for m in markers:
                 if m in body:
-                    body = body.split(m,1)[1]
+                    parts = body.split(m,1)
+                    if len(parts) > 1:
+                        body = parts[1]
             
             # elimina intestazioni tipo Da/Data/Oggettooo
             lines = body.split("\n")
