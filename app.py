@@ -235,6 +235,14 @@ def init_db():
                 created_at TIMESTAMPTZ
             );
             """)
+
+            # sistema email_key vecchie
+            cur.execute("""
+            UPDATE resort_messages
+            SET email_key = LOWER(subject)
+            WHERE email_key IS NULL
+               OR email_key != LOWER(subject);
+            """)
             
             cur.execute("""
             ALTER TABLE resort_messages
