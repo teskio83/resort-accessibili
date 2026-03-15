@@ -569,8 +569,8 @@ def add_message():
     resort_id = request.form.get("resort_id")
     subject = (request.form.get("subject") or "").strip()
     body = (request.form.get("body") or "").strip()
-    email_key = (request.form.get("email_key") or "").lower()
-    
+    email_key = (request.form.get("email_key") or "").strip().lower()
+
     if not resort_id:
         return redirect(url_for("emails"))
 
