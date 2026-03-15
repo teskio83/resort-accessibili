@@ -77,6 +77,7 @@ def fetch_emails():
             subject = msg.get("subject")
             sender = msg.get("from")
             date = msg.get("date")
+            msg_id = msg.get("Message-ID") or ""
 
             body = ""
             
@@ -138,7 +139,7 @@ def fetch_emails():
             
             body = "\n".join(clean_lines).strip()
 
-            email_key = subject.strip().lower()
+            email_key = msg_id.strip().lower()
 
             results.append({
                 "subject": subject,
