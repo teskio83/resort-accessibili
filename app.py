@@ -3,6 +3,7 @@ import imaplib
 import email
 import re
 import html
+from bs4 import BeautifulSoup
 from datetime import datetime
 from types import SimpleNamespace
 from zoneinfo import ZoneInfo
@@ -100,11 +101,21 @@ def fetch_emails():
             else:
                 body = msg.get_payload(decode=True).decode(errors="ignore")
                         
-            body = re.sub('<[^<]+?>', '', body)
-            body = html.unescape(body)
+            # converte HTML email in testo pulito
+            soup = BeautifulSoup(body, "html.parser")
             
+            # rimuove script e style
+            for tag in soup(["script", "style"]):
+                tag.decompose()
+            
+            body = soup.get_text("\n")
+            
+            body = html.unescape(body)
             body = body.replace('\r', '\n')
+            
+            # pulizia spazi
             body = re.sub(r'\n{3,}', '\n\n', body)
+            body = body.strip()
             
             # elimina intestazioni forward inutili
             markers = [
