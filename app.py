@@ -568,12 +568,10 @@ def add_message():
     resort_id = request.form.get("resort_id")
     subject = (request.form.get("subject") or "").strip()
     body = (request.form.get("body") or "").strip()
-
+    email_key = (request.form.get("email_key") or "").lower()
+    
     if not resort_id:
         return redirect(url_for("emails"))
-
-    # 🔑 chiave email
-    email_key = (subject + "|" + body[:80]).lower()
 
     with get_conn() as conn:
         with conn.cursor() as cur:
