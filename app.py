@@ -127,7 +127,7 @@ def fetch_emails():
                 if m in body:
                     body = body.split(m,1)[1]
             
-            # elimina intestazioni tipo Da/Data/Oggetto
+            # elimina intestazioni tipo Da/Data/Oggettooo
             lines = body.split("\n")
             clean_lines = []
             
