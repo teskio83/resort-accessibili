@@ -16,7 +16,7 @@
 
   {% for e in emails %}
 
-  {% set key = subject|lower %}
+  {% set key = (e.subject or "")|lower %}
 
   <div class="card card-resort p-3 mb-3">
 
