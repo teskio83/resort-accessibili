@@ -237,17 +237,17 @@ def init_db():
             );
             """)
 
+            # crea colonna se manca
+            cur.execute("""
+            ALTER TABLE resort_messages
+            ADD COLUMN IF NOT EXISTS email_key TEXT;
+            """)
+            
             # sistema email_key vecchie
             cur.execute("""
             UPDATE resort_messages
             SET email_key = LOWER(subject)
-            WHERE email_key IS NULL
-               OR email_key != LOWER(subject);
-            """)
-            
-            cur.execute("""
-            ALTER TABLE resort_messages
-            ADD COLUMN IF NOT EXISTS email_key TEXT;
+            WHERE email_key IS NULL;
             """)
 
 try:
