@@ -55,8 +55,10 @@
 
       {% if key in linked %}
 
-        <span class="badge bg-success">Email già collegata</span>
-
+        <span class="badge bg-success">
+        Email collegata → {{ linked[key] }}
+        </span>
+        
       {% else %}
 
         <form method="post" action="{{ url_for('add_message') }}">
