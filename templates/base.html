@@ -22,20 +22,6 @@
     .muted { color: #6c757d; }
     .progress { height: 10px; border-radius: 999px; background: rgba(13,110,253,.10); }
     .progress-bar { border-radius: 999px; }
-    @media (max-width: 576px) {
-      .topbar .btn {
-        padding: .35rem .6rem;
-        font-size: .85rem;
-      }
-    
-      .topbar .btn-pill {
-        border-radius: 999px;
-      }
-    
-      .topbar .small {
-        font-size: .75rem;
-      }
-    }
     .badge-soft {
       background: rgba(13,110,253,.10);
       color: #0d6efd;
@@ -74,10 +60,10 @@
         <a class="text-decoration-none text-dark" href="{{ url_for('index') }}">Resort Accessibili</a>
         <div class="small muted">Lista condivisa tra amici</div>
       </div>
-      <div class="d-flex flex-wrap align-items-center gap-2 justify-content-end">
+      <div class="d-flex align-items-center gap-3">
       
         {% if session.get("user") %}
-          <div class="small text-md-end w-100 w-md-auto">
+          <div class="small text-end">
             <div class="muted">Sei loggato come</div>
             <div class="fw-semibold">{{ session.get("user") }}</div>
           </div>
